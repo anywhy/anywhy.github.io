@@ -76,6 +76,31 @@ pagination_dir: page
 theme: next
 avatar: https://avatars2.githubusercontent.com/u/3348959?s=460&v=4
 
+live2d:
+  enable: true
+  scriptFrom: local
+  pluginRootPath: live2dw/
+  pluginJsPath: lib/
+  pluginModelPath: assets/
+  tagMode: false
+  log: false
+  model:
+    scale: 1
+    hHeadPos: 0.5
+    vHeadPos: 0.618
+    use: live2d-widget-model-hijiki
+  display:
+    position: left
+    superSample: 2
+    width: 180
+    height: 200
+    hOffset: 20
+    vOffset: -20
+  mobile:
+    show: true
+  react:
+    opacity: 0.7
+
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
