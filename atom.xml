@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://anywhy.xyz/"/>
-  <updated>2019-10-12T06:49:10.580Z</updated>
+  <updated>2019-10-12T07:18:46.818Z</updated>
   <id>http://anywhy.xyz/</id>
   
   <author>
@@ -21,7 +21,7 @@
     <link href="http://anywhy.xyz/2019/10/12/k8s-csi/"/>
     <id>http://anywhy.xyz/2019/10/12/k8s-csi/</id>
     <published>2019-10-12T11:21:08.000Z</published>
-    <updated>2019-10-12T06:49:10.580Z</updated>
+    <updated>2019-10-12T07:18:46.818Z</updated>
     
     <content type="html"><![CDATA[<h1 id="CSI-Volume-Plugins-in-Kubernetes-Design-Doc"><a href="#CSI-Volume-Plugins-in-Kubernetes-Design-Doc" class="headerlink" title="CSI Volume Plugins in Kubernetes Design Doc"></a>CSI Volume Plugins in Kubernetes Design Doc</h1><h2 id="术语"><a href="#术语" class="headerlink" title="术语"></a>术语</h2><table><thead><tr><th>术语</th><th>解析</th></tr></thead><tbody><tr><td>Container Storage Interface (CSI)</td><td>一种试图建立行业标准接口的规范，容器编排系统(COs)可以用来将任意存储系统暴露给它们的容器化工作负载。</td></tr><tr><td>in-tree</td><td>Kubernetes 核心代码库中的代码。</td></tr><tr><td>out-of-tree</td><td>Kubernetes 核心代码库之外的代码。</td></tr><tr><td>CSI Volume Plugin</td><td>核心代码库中一个新的volume插件，用作适配器，支持第三方Kubernetes CSI volume驱动程序。</td></tr><tr><td>CSI Volume Driver</td><td>第三方CSI插件驱动实现，可以用过CSI Volume Plugin在Kubernetes中使用。</td></tr></tbody></table><a id="more"></a><h2 id="背景-amp-动机"><a href="#背景-amp-动机" class="headerlink" title="背景&amp;动机"></a>背景&amp;动机</h2><p>Kubernetes volume 插件当前是“in-tree”方式实现，这样意味着它们与核心库本内二进制文件链接、编译、构建和交付。 向Kubernes(volume)添加新的存储系统需要将需改Kubernes核心代码库。这是不可取的，原因有很多，包括:</p><ol><li>Volume插件发布是一个紧密的过程而且依赖于Kubernetes releases版本。</li></ol>]]></content>
     
