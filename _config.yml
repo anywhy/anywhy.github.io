@@ -5,10 +5,10 @@
 # Site
 title: 咩咩杨 ( =•ω•= )
 subtitle: 
-description: 
+description: 对酒当歌，人生几何；何以解忧，唯有Coding。
 keywords: k8s,csi,redis
 author: Anywhy  ( =•ω•= )
-language: zh-Hans
+language: zh-CN
 timezone:
 
 # URL
@@ -74,7 +74,6 @@ pagination_dir: page
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
 theme: next
-avatar: https://avatars2.githubusercontent.com/u/3348959?s=460&v=4
 
 live2d:
   enable: true
@@ -100,6 +99,18 @@ live2d:
     show: true
   react:
     opacity: 0.7
+
+symbols_count_time:
+  # 文章上部是否显示字数
+  symbols: true
+  # 文章上部是否显示阅读时间
+  time: true
+  # 站点底端是否显示站点总字数
+  total_symbols: true
+  # 站点底端是否显示总阅读时间
+  total_time: true
+  # 是否移除代码块
+  exclude_codeblock: false
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
