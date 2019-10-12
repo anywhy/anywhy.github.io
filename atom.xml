@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://anywhy.xyz/"/>
-  <updated>2019-10-12T02:54:59.345Z</updated>
+  <updated>2019-10-12T04:44:01.461Z</updated>
   <id>http://anywhy.xyz/</id>
   
   <author>
@@ -17,38 +17,56 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
-    <title>Hello</title>
-    <link href="http://anywhy.xyz/2019/10/12/Hello/"/>
-    <id>http://anywhy.xyz/2019/10/12/Hello/</id>
-    <published>2019-10-12T10:29:40.000Z</published>
-    <updated>2019-10-12T02:54:59.345Z</updated>
+    <title>Kubernetes CSI Volume 插件设计</title>
+    <link href="http://anywhy.xyz/2019/10/12/k8s-csi/"/>
+    <id>http://anywhy.xyz/2019/10/12/k8s-csi/</id>
+    <published>2019-10-12T11:21:08.000Z</published>
+    <updated>2019-10-12T04:44:01.461Z</updated>
+    
+    <content type="html"><![CDATA[<h1 id="CSI-Volume-Plugins-in-Kubernetes-Design-Doc"><a href="#CSI-Volume-Plugins-in-Kubernetes-Design-Doc" class="headerlink" title="CSI Volume Plugins in Kubernetes Design Doc"></a>CSI Volume Plugins in Kubernetes Design Doc</h1><h2 id="术语"><a href="#术语" class="headerlink" title="术语"></a>术语</h2><table><thead><tr><th>术语</th><th>解析</th></tr></thead><tbody><tr><td>Container Storage Interface (CSI)</td><td>一种试图建立行业标准接口的规范，容器编排系统(COs)可以用来将任意存储系统暴露给它们的容器化工作负载。</td></tr><tr><td>in-tree</td><td>Kubernetes 核心代码库中的代码。</td></tr><tr><td>out-of-tree</td><td>Kubernetes 核心代码库之外的代码。</td></tr><tr><td>CSI Volume Plugin</td><td>核心代码库中一个新的volume插件，用作适配器，支持第三方Kubernetes CSI volume驱动程序。</td></tr><tr><td>CSI Volume Driver</td><td>第三方CSI插件驱动实现，可以用过CSI Volume Plugin在Kubernetes中使用。</td></tr></tbody></table><a id="more"></a><h2 id="背景-amp-动机"><a href="#背景-amp-动机" class="headerlink" title="背景&amp;动机"></a>背景&amp;动机</h2><p>Kubernetes volume 插件当前是“in-tree”方式实现，这样意味着它们与核心库本内二进制文件链接、编译、构建和交付。 向Kubernes(volume)添加新的存储系统需要将需改Kubernes核心代码库。这是不可取的，原因有很多，包括:</p><ol><li>Volume插件发布是一个紧密的过程而且依赖于Kubernetes releases版本。</li></ol>]]></content>
     
     <summary type="html">
+    
+      &lt;h1 id=&quot;CSI-Volume-Plugins-in-Kubernetes-Design-Doc&quot;&gt;&lt;a href=&quot;#CSI-Volume-Plugins-in-Kubernetes-Design-Doc&quot; class=&quot;headerlink&quot; title=&quot;CSI Volume Plugins in Kubernetes Design Doc&quot;&gt;&lt;/a&gt;CSI Volume Plugins in Kubernetes Design Doc&lt;/h1&gt;&lt;h2 id=&quot;术语&quot;&gt;&lt;a href=&quot;#术语&quot; class=&quot;headerlink&quot; title=&quot;术语&quot;&gt;&lt;/a&gt;术语&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;术语&lt;/th&gt;
+&lt;th&gt;解析&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;&lt;tr&gt;
+&lt;td&gt;Container Storage Interface (CSI)&lt;/td&gt;
+&lt;td&gt;一种试图建立行业标准接口的规范，容器编排系统(COs)可以用来将任意存储系统暴露给它们的容器化工作负载。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;in-tree&lt;/td&gt;
+&lt;td&gt;Kubernetes 核心代码库中的代码。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;out-of-tree&lt;/td&gt;
+&lt;td&gt;Kubernetes 核心代码库之外的代码。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;CSI Volume Plugin&lt;/td&gt;
+&lt;td&gt;核心代码库中一个新的volume插件，用作适配器，支持第三方Kubernetes CSI volume驱动程序。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;CSI Volume Driver&lt;/td&gt;
+&lt;td&gt;第三方CSI插件驱动实现，可以用过CSI Volume Plugin在Kubernetes中使用。&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;&lt;/table&gt;
     
     </summary>
     
     
-    
-      <category term="Hello" scheme="http://anywhy.xyz/tags/Hello/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Hello World</title>
-    <link href="http://anywhy.xyz/2019/10/12/hello-world/"/>
-    <id>http://anywhy.xyz/2019/10/12/hello-world/</id>
-    <published>2019-10-12T02:54:59.345Z</published>
-    <updated>2019-10-12T02:54:59.345Z</updated>
-    
-    <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p><a id="more"></a><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a href=&quot;https://hexo.io/docs/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;documentation&lt;/a&gt; for more info. If you get any problems when using Hexo, you can find the answer in &lt;a href=&quot;https://hexo.io/docs/troubleshooting.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;troubleshooting&lt;/a&gt; or you can ask me on &lt;a href=&quot;https://github.com/hexojs/hexo/issues&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
-    
-    </summary>
+      <category term="Kubernetes" scheme="http://anywhy.xyz/categories/Kubernetes/"/>
     
     
+      <category term="CSI" scheme="http://anywhy.xyz/tags/CSI/"/>
+    
+      <category term="k8s" scheme="http://anywhy.xyz/tags/k8s/"/>
+    
+      <category term="storage" scheme="http://anywhy.xyz/tags/storage/"/>
     
   </entry>
   
