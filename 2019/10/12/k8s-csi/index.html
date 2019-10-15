@@ -59,14 +59,14 @@
   <meta name="description" content="CSI Volume Plugins in Kubernetes Design Doc术语   术语 解析    Container Storage Interface (CSI) 一种试图建立行业标准接口的规范，容器编排系统(COs)可以用来将任意存储系统暴露给它们的容器化工作负载。   in-tree Kubernetes 核心代码库中的代码。   out-of-tree Kubernetes">
 <meta name="keywords" content="CSI,k8s,storage">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Kubernetes CSI Volume 插件设计">
+<meta property="og:title" content="Kubernetes CSI(Container Storage Interface) 设计">
 <meta property="og:url" content="http://anywhy.xyz/2019/10/12/k8s-csi/index.html">
 <meta property="og:site_name" content="咩咩杨 ( =•ω•= )">
 <meta property="og:description" content="CSI Volume Plugins in Kubernetes Design Doc术语   术语 解析    Container Storage Interface (CSI) 一种试图建立行业标准接口的规范，容器编排系统(COs)可以用来将任意存储系统暴露给它们的容器化工作负载。   in-tree Kubernetes 核心代码库中的代码。   out-of-tree Kubernetes">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-10-14T03:50:17.840Z">
+<meta property="og:updated_time" content="2019-10-15T01:54:44.777Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Kubernetes CSI Volume 插件设计">
+<meta name="twitter:title" content="Kubernetes CSI(Container Storage Interface) 设计">
 <meta name="twitter:description" content="CSI Volume Plugins in Kubernetes Design Doc术语   术语 解析    Container Storage Interface (CSI) 一种试图建立行业标准接口的规范，容器编排系统(COs)可以用来将任意存储系统暴露给它们的容器化工作负载。   in-tree Kubernetes 核心代码库中的代码。   out-of-tree Kubernetes">
   <link rel="canonical" href="http://anywhy.xyz/2019/10/12/k8s-csi/">
 
@@ -82,7 +82,7 @@
   };
 </script>
 
-  <title>Kubernetes CSI Volume 插件设计 | 咩咩杨 ( =•ω•= )</title>
+  <title>Kubernetes CSI(Container Storage Interface) 设计 | 咩咩杨 ( =•ω•= )</title>
   
 
 
@@ -233,7 +233,7 @@
       <meta itemprop="name" content="咩咩杨 ( =•ω•= )">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">Kubernetes CSI Volume 插件设计
+        <h2 class="post-title" itemprop="name headline">Kubernetes CSI(Container Storage Interface) 设计
 
           
         </h2>
@@ -260,7 +260,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-10-14 03:50:17" itemprop="dateModified" datetime="2019-10-14T03:50:17+00:00">2019-10-14</time>
+                <time title="修改时间：2019-10-15 01:54:44" itemprop="dateModified" datetime="2019-10-15T01:54:44+00:00">2019-10-15</time>
               </span>
             
           
@@ -279,7 +279,7 @@
           
 
           
-            <span id="/2019/10/12/k8s-csi/" class="post-meta-item leancloud_visitors" data-flag-title="Kubernetes CSI Volume 插件设计" title="阅读次数">
+            <span id="/2019/10/12/k8s-csi/" class="post-meta-item leancloud_visitors" data-flag-title="Kubernetes CSI(Container Storage Interface) 设计" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -295,20 +295,6 @@
               <span id="busuanzi_value_page_pv"></span>
             </span>
           
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="fa fa-comment-o"></i>
-      </span>
-        
-      
-      <span class="post-meta-item-text">Valine：</span>
-    
-    <a title="valine" href="/2019/10/12/k8s-csi/#comments" itemprop="discussionUrl"><span class="post-comments-count valine-comment-count" data-xid="/2019/10/12/k8s-csi/" itemprop="commentCount"></span></a>
-  </span>
-  
-  
           <br>
             <span class="post-meta-item" title="本文字数">
               <span class="post-meta-item-icon">
@@ -317,7 +303,7 @@
               
                 <span class="post-meta-item-text">本文字数：</span>
               
-              <span>3.9k</span>
+              <span>6.8k</span>
             </span>
           
             <span class="post-meta-item" title="阅读时长">
@@ -327,7 +313,7 @@
               
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
               
-              <span>4 分钟</span>
+              <span>6 分钟</span>
             </span>
           
 
@@ -412,7 +398,38 @@
 
 <p>选择新的对象类型<code>CSINodeInfo</code>替代<code>Node.Status</code>，因为Node对象已经足够大了与它的大小有问题有关。<code>CSINodeInfo</code>是在集群启动时由TODO (jsafrane)安装的CRD，在<code>kubernetes/kubernetes/pkg/apis/storage-csi/v1alpha1/types.go</code>中定义, 因此k8s.io/client-go和k8s.io/api自动生成。<code>CSINodeInfo</code>的所有用户将容忍如果CRD没有安装和重试任何他们需要做的指数后退和正确的错误报告。特别是当CRD缺失时，kubelet能够履行它的正常职责。</p>
 <p>每个节点必须有0个或一个<code>CSINodeInfo</code>实例。这是由<code>CSINodeInfo.Name=Node.Name</code>名称。TODO:如何验证这个?每个<code>CSINodeInfo</code>都归属相应的Node，用于垃圾收集。</p>
-<h4 id="Master到CSI驱动通信"><a href="#Master到CSI驱动通信" class="headerlink" title="Master到CSI驱动通信"></a>Master到CSI驱动通信</h4>
+<h4 id="Master到CSI驱动通信"><a href="#Master到CSI驱动通信" class="headerlink" title="Master到CSI驱动通信"></a>Master到CSI驱动通信</h4><p>因为CSI卷驱动程序代码被认为是不可信的，所以可能不允许它在主机上运行。因此，Kube controller manager(负责创建、删除、附加和分离)不能通过UDS(Unix Domain Socket)与“CSI卷驱动程序”容器进行通信。相反，Kube controller manager管理器将通过Kubernetes API与外部“CSI卷驱动程序”通信。</p>
+<p>更具体地说，一些外部组件必须代表外部CSI卷驱动程序监视Kubernetes API，并触发针对它的适当操作。这消除了在kube-controller-manager和CSI卷驱动程序之间发现和保护通道的问题。</p>
+<p>在Kubernetes上轻松部署外部容器化的CSI卷驱动程序，而无需让驱动程序Kubernetes知道，Kubernetes将提供一个边车(sidecar)“Kubernetes to CSI”代理容器，该代理容器将监视Kubernetes API并触发针对“CSI卷驱动程序”容器的适当操作。下面的“在Kubernetes上部署CSI驱动程序的建议机制”小节对此进行了详细说明。</p>
+<p>外部组件CSI卷驱动程序监视Kubernetes API处理配置、删除、附加和分离操作实现。</p>
+<h5 id="配置和删除"><a href="#配置和删除" class="headerlink" title="配置和删除"></a>配置和删除</h5><p>配置和删除操作使用现有的<code>外部供应器机制</code>进行处理，其中代表外部CSI卷驱动程序监视Kubernetes API的外部组件将充当外部供应器。</p>
+<p>简而言之，为了动态地提供一个新的CSI卷，集群管理员将创建一个<code>StorageClass</code>，其中的供应者与代表CSI卷驱动程序处理供应请求的外部供应者的名称对应。</p>
+<p>为了提供一个新的CSI卷，终端用户将创建一个引用这个存储类的<code>PersistentVolumeClaim</code>对象。外部供应程序将对PVC的创建做出反应，并发出针对CSI卷驱动程序的<code>CreateVolume</code>调用来供应卷。与其他动态供应的卷一样，<code>CreateVolume</code>名称将自动生成。<code>CreateVolume</code>能力将从<code>PersistentVolumeClaim</code>对象中获取。<code>CreateVolume</code>参数将通过<code>StorageClass</code>参数传递(对Kubernetes不透明)。</p>
+<p>如果<code>PersistentVolumeClaim</code>的卷名是<code>volume.alpha.kubernetes.io/selected-node</code>注解(只有在<code>StorageClass</code>中启用延迟卷绑定时才添加)，供应者将从相应的<code>CSINodeInfo</code>实例中获取相关的拓扑键和节点标签中的拓扑值，并使用它们在<code>CreateVolume()</code>请求中生成首选拓扑。如果未设置注解，则不会指定首选拓扑(除非PVC遵循本节后面讨论的<code>StatefulSet</code>命名格式)。来自<code>StorageClass</code>的<code>allowedtopology</code>作为必需的拓扑传递。如果<code>AllowedTopologies</code>是未指定的，则供应程序将在整个集群中传递一组聚合的拓扑值作为必需的拓扑。</p>
+<p>要执行此拓扑聚合，外部供应程序将缓存所有现有节点对象。为了防止受影响的节点影响供应过程，它将选择单个节点作为密钥的真值来源，而不是依赖于存储在<code>CSINodeInfo</code>中的密钥来获取每个节点对象。对于使用后期绑定提供的pvc，所选节点是事实的来源;否则将选择一个随机节点。然后，供应者将遍历包含来自驱动程序的节点ID的所有缓存节点，使用这些键聚合标签。注意，如果集群中的拓扑键不同，则只会考虑与所选节点的拓扑键匹配的节点子集进行供应。</p>
+<p>为了生成首选拓扑，外部供应程序将在<code>CreateVolume()</code>调用中为首选拓扑生成N个段，其中N是必需拓扑的大小。包含多个段来支持跨多个拓扑段可用的卷。来自所选节点的拓扑段总是首选拓扑中的第一个。所有其他段都是对其余必要拓扑的一些重新排序，这样，对于给定的必要拓扑(或任意对其重新排序)和选择的节点，可以保证首选拓扑集总是相同的。</p>
+<p>如果设置了即时卷绑定模式，并且PVC遵循状态集命名格式，那么供应程序将选择一个来自必需的基于PVC名称的拓扑的段作为首选拓扑中的第一个段，这将确保拓扑在状态集的所有卷中均匀分布。该逻辑与GCE持久磁盘供应程序中的名称哈希逻辑类似。优先拓扑中的其他段的顺序与上面描述的相同。这个特性将在作为推荐部署方法的一部分提供的外部供应程序中标记门控。</p>
+<p>一旦操作成功完成，外部供应程序将创建一个<code>PersistentVolume</code>对象，使用<code>CreateVolume</code>响应中返回的信息来表示该卷。返回卷的拓扑被转换为<code>PersistentVolume</code> <code>NodeAffinity</code>字段。然后将<code>PersistentVolume</code>对象绑定到<code>PersistentVolumeClaim</code>并可供使用。</p>
+<p>拓扑密钥/值对的格式由用户定义，并且必须在以下位置之间匹配:</p>
+<ul>
+<li><code>Node</code>拓扑标签</li>
+<li><code>PersistentVolume</code> <code>NodeAffinity</code> 字段</li>
+<li>当<code>StorageClass</code>启用了延迟卷绑定时，调度器将以以下方式使用节点的拓扑信息:<ol>
+<li>在动态供应期间，调度器通过将每个节点的拓扑与<code>StorageClass</code>中的<code>AllowedTopologies</code>进行比较，为供应程序选择一个候选节点。</li>
+<li>在卷绑定和pod调度期间，调度器通过比较<code>PersistentVolume</code>的<code>Node</code>拓扑和<code>VolumeNodeAffinity</code>来为pod选择一个候选节点。</li>
+</ol>
+</li>
+</ul>
+<p>更详细的描述可以在<a href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/volume-topology-scheduling.md" target="_blank" rel="noopener">topology-aware volume scheduling design doc</a>中找到。有关推荐部署方法使用的格式，请参阅<a href="https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#topology-representation-in-node-objects" target="_blank" rel="noopener">Topology Representation in Node Objects</a>。</p>
+<p>要删除CSI卷，最终用户将删除相应的<code>PersistentVolumeClaim</code>对象。外部供应程序将对PVC的删除做出反应，并且基于其回收策略，它将针对CSI卷驱动程序命令发出<code>DeleteVolume</code>调用来删除卷。然后它将删除<code>PersistentVolume</code>对象。</p>
+<h5 id="附加和分离"><a href="#附加和分离" class="headerlink" title="附加和分离"></a>附加和分离</h5><p>附加/分离操作也必须由外部组件(“attacher”)处理。attacher代表外部CSI卷驱动程序监视Kubernetes API，以获取新的<code>VolumeAttachment</code>对象(在下文中定义)，并触发针对CSI卷驱动程序的适当调用来附加卷。即使底层的CSI驱动程序不支持<code>ControllerPublishVolume</code>调用，因为Kubernetes对此一无所知，attacher也必须监视<code>VolumeAttachment</code>对象并将其标记为attached。</p>
+<p>更具体地说，外部“attacher”必须代表外部CSI卷驱动程序监视Kubernetes API，以处理附加/分离请求。</p>
+<p>一旦下列条件为真，外部提供者应该针对CSI卷驱动程序调用<code>ControllerPublishVolume</code>来将卷附加到指定的节点:</p>
+<ol>
+<li>由Kubernetes attach/detach控制器创建一个新的<code>VolumeAttachment</code>Kubernetes API对象。</li>
+<li><code>VolumeAttachment.Spec.Attacher</code>值对应于外部Attacher的名称。</li>
+</ol>
+
     </div>
 
     
@@ -452,7 +469,7 @@
           </div>
           
     
-    <div class="comments" id="comments"></div>
+    <div class="comments" id="gitalk-container"></div>
   
 
         </div>
@@ -485,7 +502,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#CSI-Volume-Plugins-in-Kubernetes-Design-Doc"><span class="nav-number">1.</span> <span class="nav-text">CSI Volume Plugins in Kubernetes Design Doc</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#术语"><span class="nav-number">1.1.</span> <span class="nav-text">术语</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#背景-amp-动机"><span class="nav-number">1.2.</span> <span class="nav-text">背景&amp;动机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.3.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#设计详情"><span class="nav-number">1.4.</span> <span class="nav-text">设计详情</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第三方-CSI-Volume-Drivers"><span class="nav-number">1.4.1.</span> <span class="nav-text">第三方 CSI Volume Drivers</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通信机制"><span class="nav-number">1.4.2.</span> <span class="nav-text">通信机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Kubelet-到-CSI驱动"><span class="nav-number">1.4.2.1.</span> <span class="nav-text">Kubelet 到 CSI驱动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Master到CSI驱动通信"><span class="nav-number">1.4.2.2.</span> <span class="nav-text">Master到CSI驱动通信</span></a></li></ol></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#CSI-Volume-Plugins-in-Kubernetes-Design-Doc"><span class="nav-number">1.</span> <span class="nav-text">CSI Volume Plugins in Kubernetes Design Doc</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#术语"><span class="nav-number">1.1.</span> <span class="nav-text">术语</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#背景-amp-动机"><span class="nav-number">1.2.</span> <span class="nav-text">背景&amp;动机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.3.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#设计详情"><span class="nav-number">1.4.</span> <span class="nav-text">设计详情</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第三方-CSI-Volume-Drivers"><span class="nav-number">1.4.1.</span> <span class="nav-text">第三方 CSI Volume Drivers</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通信机制"><span class="nav-number">1.4.2.</span> <span class="nav-text">通信机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Kubelet-到-CSI驱动"><span class="nav-number">1.4.2.1.</span> <span class="nav-text">Kubelet 到 CSI驱动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Master到CSI驱动通信"><span class="nav-number">1.4.2.2.</span> <span class="nav-text">Master到CSI驱动通信</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#配置和删除"><span class="nav-number">1.4.2.2.1.</span> <span class="nav-text">配置和删除</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#附加和分离"><span class="nav-number">1.4.2.2.2.</span> <span class="nav-text">附加和分离</span></a></li></ol></li></ol></li></ol></li></ol></li></ol></div>
         
       </div>
       <!--/noindex-->
@@ -614,14 +631,14 @@
     </span>
       <span class="post-meta-item-text">站点总字数：</span>
     
-    <span title="站点总字数">4k</span>
+    <span title="站点总字数">7k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
     
-    <span title="站点阅读时长">4 分钟</span>
+    <span title="站点阅读时长">6 分钟</span>
 </div>
   <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
   <span class="post-meta-divider">|</span>
@@ -801,29 +818,23 @@
 
   
 
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css">
 
 <script>
-NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
-  var GUEST = ['nick', 'mail', 'link'];
-  var guest = 'nick,mail,link';
-  guest = guest.split(',').filter(item => {
-    return GUEST.includes(item);
-  });
-  new Valine({
-    el: '#comments',
-    verify: false,
-    notify: false,
-    appId: 'SbWfXXeKVvghl3gJPMtBW4hl-gzGzoHsz',
-    appKey: 'lJjfAirEAoMGe7tJ2xtXUBw6',
-    placeholder: 'Just go go',
-    avatar: 'mm',
-    meta: guest,
-    pageSize: '10' || 10,
-    visitor: false,
-    lang: 'zh-cn' || 'zh-cn',
-    path: location.pathname
-  });
-}, window.Valine);
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: '70651fb8d1bdecd40dec',
+      clientSecret: 'a33039a79483c67e00d74f0ba5c2c19d6512d19a',
+      repo: 'blog-comments',
+      owner: 'anywhy',
+      admin: ['anywhy'],
+      id: '351747c19111406ccc2cab4ad18ffed3',
+        language: 'zh-CN',
+      
+      distractionFreeMode: 'true'
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
 </script>
 
 <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginJsPath":"lib/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"scale":1,"hHeadPos":0.5,"vHeadPos":0.618,"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","superSample":2,"width":180,"height":200,"hOffset":20,"vOffset":-20},"mobile":{"show":true},"react":{"opacity":0.7}});</script></body>
