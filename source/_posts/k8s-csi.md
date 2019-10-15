@@ -293,7 +293,7 @@ external-attacher可以实现自己的错误恢复策略，并在上面为附件
 ## 在Kubernetes上部署CSI驱动程序的推荐机制
 
 虽然Kubernetes并没有规定CSI卷驱动程序的打包，但是它提供了以下建议来简化在Kubernetes上部署容器化CSI卷驱动程序。
-![Recommended CSI Deployment Diagram](k8s-csi/container-storage-interface_diagram1.png?raw=true "Recommended CSI Deployment Diagram")
+![Recommended CSI Deployment Diagram](container-storage-interface_diagram1.png?raw=true "Recommended CSI Deployment Diagram")
 
 要部署一个容器化的第三方CSI卷驱动程序，建议存储供应商:
 
