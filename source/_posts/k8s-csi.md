@@ -1,5 +1,5 @@
 ---
-title: Kubernetes CSI Volume 插件设计
+title: Kubernetes CSI(Container Storage Interface) 设计
 date: 2019-10-12 11:21:08
 categories: Kubernetes
 tags: [CSI,k8s,storage]
@@ -107,3 +107,51 @@ type CSIDriverInfo struct {
 
 #### Master到CSI驱动通信
 
+因为CSI卷驱动程序代码被认为是不可信的，所以可能不允许它在主机上运行。因此，Kube controller manager(负责创建、删除、附加和分离)不能通过UDS(Unix Domain Socket)与“CSI卷驱动程序”容器进行通信。相反，Kube controller manager管理器将通过Kubernetes API与外部“CSI卷驱动程序”通信。
+
+更具体地说，一些外部组件必须代表外部CSI卷驱动程序监视Kubernetes API，并触发针对它的适当操作。这消除了在kube-controller-manager和CSI卷驱动程序之间发现和保护通道的问题。
+
+在Kubernetes上轻松部署外部容器化的CSI卷驱动程序，而无需让驱动程序Kubernetes知道，Kubernetes将提供一个边车(sidecar)“Kubernetes to CSI”代理容器，该代理容器将监视Kubernetes API并触发针对“CSI卷驱动程序”容器的适当操作。下面的“在Kubernetes上部署CSI驱动程序的建议机制”小节对此进行了详细说明。
+
+外部组件CSI卷驱动程序监视Kubernetes API处理配置、删除、附加和分离操作实现。
+
+##### 配置和删除
+
+配置和删除操作使用现有的`外部供应器机制`进行处理，其中代表外部CSI卷驱动程序监视Kubernetes API的外部组件将充当外部供应器。
+
+简而言之，为了动态地提供一个新的CSI卷，集群管理员将创建一个`StorageClass`，其中的供应者与代表CSI卷驱动程序处理供应请求的外部供应者的名称对应。
+
+为了提供一个新的CSI卷，终端用户将创建一个引用这个存储类的`PersistentVolumeClaim`对象。外部供应程序将对PVC的创建做出反应，并发出针对CSI卷驱动程序的`CreateVolume`调用来供应卷。与其他动态供应的卷一样，`CreateVolume`名称将自动生成。`CreateVolume`能力将从`PersistentVolumeClaim`对象中获取。`CreateVolume`参数将通过`StorageClass`参数传递(对Kubernetes不透明)。
+
+如果`PersistentVolumeClaim`的卷名是`volume.alpha.kubernetes.io/selected-node`注解(只有在`StorageClass`中启用延迟卷绑定时才添加)，供应者将从相应的`CSINodeInfo`实例中获取相关的拓扑键和节点标签中的拓扑值，并使用它们在`CreateVolume()`请求中生成首选拓扑。如果未设置注解，则不会指定首选拓扑(除非PVC遵循本节后面讨论的`StatefulSet`命名格式)。来自`StorageClass`的`allowedtopology`作为必需的拓扑传递。如果`AllowedTopologies`是未指定的，则供应程序将在整个集群中传递一组聚合的拓扑值作为必需的拓扑。
+
+要执行此拓扑聚合，外部供应程序将缓存所有现有节点对象。为了防止受影响的节点影响供应过程，它将选择单个节点作为密钥的真值来源，而不是依赖于存储在`CSINodeInfo`中的密钥来获取每个节点对象。对于使用后期绑定提供的pvc，所选节点是事实的来源;否则将选择一个随机节点。然后，供应者将遍历包含来自驱动程序的节点ID的所有缓存节点，使用这些键聚合标签。注意，如果集群中的拓扑键不同，则只会考虑与所选节点的拓扑键匹配的节点子集进行供应。
+
+为了生成首选拓扑，外部供应程序将在`CreateVolume()`调用中为首选拓扑生成N个段，其中N是必需拓扑的大小。包含多个段来支持跨多个拓扑段可用的卷。来自所选节点的拓扑段总是首选拓扑中的第一个。所有其他段都是对其余必要拓扑的一些重新排序，这样，对于给定的必要拓扑(或任意对其重新排序)和选择的节点，可以保证首选拓扑集总是相同的。
+
+如果设置了即时卷绑定模式，并且PVC遵循状态集命名格式，那么供应程序将选择一个来自必需的基于PVC名称的拓扑的段作为首选拓扑中的第一个段，这将确保拓扑在状态集的所有卷中均匀分布。该逻辑与GCE持久磁盘供应程序中的名称哈希逻辑类似。优先拓扑中的其他段的顺序与上面描述的相同。这个特性将在作为推荐部署方法的一部分提供的外部供应程序中标记门控。
+
+一旦操作成功完成，外部供应程序将创建一个`PersistentVolume`对象，使用`CreateVolume`响应中返回的信息来表示该卷。返回卷的拓扑被转换为`PersistentVolume` `NodeAffinity`字段。然后将`PersistentVolume`对象绑定到`PersistentVolumeClaim`并可供使用。
+
+拓扑密钥/值对的格式由用户定义，并且必须在以下位置之间匹配:
+
+* `Node`拓扑标签
+* `PersistentVolume` `NodeAffinity` 字段
+* 当`StorageClass`启用了延迟卷绑定时，调度器将以以下方式使用节点的拓扑信息:
+  1. 在动态供应期间，调度器通过将每个节点的拓扑与`StorageClass`中的`AllowedTopologies`进行比较，为供应程序选择一个候选节点。
+  2. 在卷绑定和pod调度期间，调度器通过比较`PersistentVolume`的`Node`拓扑和`VolumeNodeAffinity`来为pod选择一个候选节点。
+
+更详细的描述可以在[topology-aware volume scheduling design doc](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/volume-topology-scheduling.md)中找到。有关推荐部署方法使用的格式，请参阅[Topology Representation in Node Objects](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#topology-representation-in-node-objects)。
+
+要删除CSI卷，最终用户将删除相应的`PersistentVolumeClaim`对象。外部供应程序将对PVC的删除做出反应，并且基于其回收策略，它将针对CSI卷驱动程序命令发出`DeleteVolume`调用来删除卷。然后它将删除`PersistentVolume`对象。
+
+##### 附加和分离
+
+附加/分离操作也必须由外部组件(“attacher”)处理。attacher代表外部CSI卷驱动程序监视Kubernetes API，以获取新的`VolumeAttachment`对象(在下文中定义)，并触发针对CSI卷驱动程序的适当调用来附加卷。即使底层的CSI驱动程序不支持`ControllerPublishVolume`调用，因为Kubernetes对此一无所知，attacher也必须监视`VolumeAttachment`对象并将其标记为attached。
+
+更具体地说，外部“attacher”必须代表外部CSI卷驱动程序监视Kubernetes API，以处理附加/分离请求。
+
+一旦下列条件为真，外部提供者应该针对CSI卷驱动程序调用`ControllerPublishVolume`来将卷附加到指定的节点:
+
+1. 由Kubernetes attach/detach控制器创建一个新的`VolumeAttachment`Kubernetes API对象。
+2. `VolumeAttachment.Spec.Attacher`值对应于外部Attacher的名称。
