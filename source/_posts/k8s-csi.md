@@ -155,3 +155,182 @@ type CSIDriverInfo struct {
 
 1. 由Kubernetes attach/detach控制器创建一个新的`VolumeAttachment`Kubernetes API对象。
 2. `VolumeAttachment.Spec.Attacher`值对应于外部Attacher的名称。
+3. `VolumeAttachment.Status.Attached`尚未设置为true。
+4.  * Kubernetes节点API对象的名称与`VolumeAttachment.Spec.NodeName`匹配。节点名和该对象包含一个`csi.volume.kubernetes.io/nodeid`注解。该注释包含一个JSON blob，一个键/值对列表，其中一个键对应CSI卷驱动程序名称，该值是该驱动程序的NodeID。这个NodeId映射可以在`ControllerPublishVolume`调用中检索和使用。
+
+    * 或者存在一个`CSINodeInfo` API对象，其名称与`VolumeAttachment.Spec.NodeName`匹配。节点名和对象包含CSI卷驱动程序的`CSIDriverInfo`。`CSIDriverInfo`包含`ControllerPublishVolume`调用的`NodeId`。
+5. `VolumeAttachment.Metadata.DeletionTimestamp`没有设置。
+
+在启动`ControllerPublishVolume`操作之前， external-attacher应该将一下添加到这些Kubernetes API对象中:
+
+* `VolumeAttachment`，以便在删除对象时，external-attacher有机会首先分离卷。一旦卷与节点完全分离，external-attacher将删除该终结器。
+* 到`VolumeAttachment`引用的持久卷，因此在附加卷时不能删除PV。外部连接器需要来自PV的信息来执行分离操作。一旦所有引用PV的`VolumeAttachment`对象被删除，即该卷与所有节点分离，则attacher将删除终结器。
+
+如果操作成功完成，`external-attacher`将:
+
+1. 设置`VolumeAttachment.Status.Attached`为true以指示附加的卷。
+2. 更新`VolumeAttachment.Status.AttachmentMetadata`相应的内容并返回`PublishVolumeInfo`。
+3. 清除`VolumeAttachment.Status.AttachError`错误字段
+
+如果操作失败，`external-attacher`将:
+
+1. 确保`VolumeAttachment.Status.Attached`为false，以表示没有附加成功。
+2. 设置`VolumeAttachment.Status.AttachError`为详细错误内容。
+3. 创建一个针对与`VolumeAttachment`对象关联的Kubernetes API的事件，以通知用户哪里出错了。
+
+external-attacher可以实现自己的错误恢复策略，并在上面为附件指定的条件有效时重试。强烈建议外部连接器对重试执行指数回退策略。
+
+删除`VolumeAttachment` Kubernetes API对象将触发分离操作。因为`VolumeAttachment` Kubernetes API对象将有一个由external-attacher添加的终结器，所以它将在删除对象之前等待external-attacher的确认。
+
+一旦所有的条件都为真，external-attacher应该针对CSI卷驱动程序调用`ControllerUnpublishVolume`来将卷从指定的节点分离出来:
+
+* `VolumeAttachment` Kubernetes API对象被标记为删除:设置了`VolumeAttachment.metadata.deletionTimestamp`字段的值。
+
+如果操作成功完成，`external-attacher`将:
+
+1. 从`VolumeAttachment`对象上的终结器列表中删除其终结器，允许删除操作继续。
+
+如果操作失败，`external-attacher`将:
+
+1. 确保`VolumeAttachment.Status.Attached`为false，以表示没有附加成功。
+2. 设置`VolumeAttachment.Status.AttachError`为详细错误内容。
+3. 创建一个针对与`VolumeAttachment`对象关联的Kubernetes API的事件，以通知用户哪里出错了。
+
+新的API对象`VolumeAttachment`将被定义如下:
+
+```go
+  // VolumeAttachment captures the intent to attach or detach the specified volume
+  // to/from the specified node.
+  //
+  // VolumeAttachment objects are non-namespaced.
+  type VolumeAttachment struct {
+    metav1.TypeMeta `json:",inline"`
+
+    // Standard object metadata.
+    // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
+    // +optional
+    metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+    // Specification of the desired attach/detach volume behavior.
+    // Populated by the Kubernetes system.
+    Spec VolumeAttachmentSpec `json:"spec" protobuf:"bytes,2,opt,name=spec"`
+
+    // Status of the VolumeAttachment request.
+    // Populated by the entity completing the attach or detach
+    // operation, i.e. the external-attacher.
+    // +optional
+    Status VolumeAttachmentStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+  }
+
+  // The specification of a VolumeAttachment request.
+  type VolumeAttachmentSpec struct {
+    // Attacher indicates the name of the volume driver that MUST handle this
+    // request. This is the name returned by GetPluginName() and must be the
+    // same as StorageClass.Provisioner.
+    Attacher string `json:"attacher" protobuf:"bytes,1,opt,name=attacher"`
+
+    // AttachedVolumeSource represents the volume that should be attached.
+    VolumeSource AttachedVolumeSource `json:"volumeSource" protobuf:"bytes,2,opt,name=volumeSource"`
+
+    // Kubernetes node name that the volume should be attached to.
+    NodeName string `json:"nodeName" protobuf:"bytes,3,opt,name=nodeName"`
+  }
+
+  // VolumeAttachmentSource represents a volume that should be attached.
+  // Right now only PersistentVolumes can be attached via external attacher,
+  // in future we may allow also inline volumes in pods.
+  // Exactly one member can be set.
+  type AttachedVolumeSource struct {
+    // Name of the persistent volume to attach.
+    // +optional
+    PersistentVolumeName *string `json:"persistentVolumeName,omitempty" protobuf:"bytes,1,opt,name=persistentVolumeName"`
+
+    // Placeholder for *VolumeSource to accommodate inline volumes in pods.
+  }
+
+  // The status of a VolumeAttachment request.
+  type VolumeAttachmentStatus struct {
+    // Indicates the volume is successfully attached.
+    // This field must only be set by the entity completing the attach
+    // operation, i.e. the external-attacher.
+    Attached bool `json:"attached" protobuf:"varint,1,opt,name=attached"`
+
+    // Upon successful attach, this field is populated with any
+    // information returned by the attach operation that must be passed
+    // into subsequent WaitForAttach or Mount calls.
+    // This field must only be set by the entity completing the attach
+    // operation, i.e. the external-attacher.
+    // +optional
+    AttachmentMetadata map[string]string `json:"attachmentMetadata,omitempty" protobuf:"bytes,2,rep,name=attachmentMetadata"`
+
+    // The most recent error encountered during attach operation, if any.
+    // This field must only be set by the entity completing the attach
+    // operation, i.e. the external-attacher.
+    // +optional
+      AttachError *VolumeError `json:"attachError,omitempty" protobuf:"bytes,3,opt,name=attachError,casttype=VolumeError"`
+
+    // The most recent error encountered during detach operation, if any.
+    // This field must only be set by the entity completing the detach
+    // operation, i.e. the external-attacher.
+    // +optional
+    DetachError *VolumeError `json:"detachError,omitempty" protobuf:"bytes,4,opt,name=detachError,casttype=VolumeError"`
+  }
+
+  // Captures an error encountered during a volume operation.
+  type VolumeError struct {
+    // Time the error was encountered.
+    // +optional
+    Time metav1.Time `json:"time,omitempty" protobuf:"bytes,1,opt,name=time"`
+
+    // String detailing the error encountered during Attach or Detach operation.
+    // This string may be logged, so it should not contain sensitive
+    // information.
+    // +optional
+    Message string `json:"message,omitempty" protobuf:"bytes,2,opt,name=message"`
+  }
+```
+
+## 在Kubernetes上部署CSI驱动程序的推荐机制
+
+虽然Kubernetes并没有规定CSI卷驱动程序的打包，但是它提供了以下建议来简化在Kubernetes上部署容器化CSI卷驱动程序。
+![Recommended CSI Deployment Diagram](k8s-csi/container-storage-interface_diagram1.png?raw=true "Recommended CSI Deployment Diagram")
+
+要部署一个容器化的第三方CSI卷驱动程序，建议存储供应商:
+
+* 创建一个“CSI卷驱动程序”容器，该容器实现卷插件行为，并通过UDS(unix domain socket)公开gRPC接口，如CSI规范中定义的那样(包括控制器(Controller Service)、节点服务(Node Service)和身份服务(Identity Service))。
+
+* 绑定“CSI卷驱动程序”容器辅助容器(external-attacher、external-provisioner node-driver-registrar, cluster-driver-registrar, external-resizer, external-snapshotter, livenessprobe) Kubernetes团队将提供(这些辅助容器将协助“CSI卷驱动程序”容器与Kubernetes交互系统)。更具体地说，创建以下Kubernetes对象:
+  * 为了方便与Kubernetes控制器、`StatefulSet`或`Deployment`(根据用户的需要，参见集群级部署)有：
+    * 提供以下容器：
+      * “CSI卷驱动程序”容器有存储提供商提供。
+      * Kubernetes团队提供的容器(都是可选的):
+        * `cluster-driver-registrar` (请参考“cluster-driver-registrar”存储库中的描述，必须的)
+        * `external-provisioner` (必须， 提供 provision/delete 操作)
+        * `external-attacher` (必须， 提供attach/detach 操作. 如果您希望跳过附加步骤，除了忽略此容器外，还必须在Kubernetes中启用CSISkipAttach特性)
+        * `external-resizer` (必须， 提供resize操作)
+        * `external-snapshotter` (必须，提供volume-level快照操作)
+        * `livenessprobe`
+    * 提供以下容器:
+      * `emptyDir` 卷
+      * 挂载所有的容器,包括 “CSI卷驱动程序”.
+      * “CSI卷驱动程序”容器应该在相应的目录中创建它的UDS，以便与Kubernetes帮助容器进行通信。
+  * 一个`DaemonSet`(为了方便与kubelet的每个实例进行通信)，它具有:
+    * 提供以下容器
+      * “CSI卷驱动程序”容器有存储提供商提供。
+      * Kubernetes团队提供的容器：
+        * `node-driver-registrar` - 负责向kubelet注册UDS(unix domain socket)。
+        * `livenessprobe` (可选)
+    * 提供以下存储卷:
+      * `hostpath`卷
+        * 从主机中暴露`/var/lib/kubelet/plugins_registry`目录。
+        * 只在`node-driver-registrar`容器中挂载`/registration`目录。
+        * `node-driver-registrar` 将使用此UDS(unix domain socket)向kubelet`注册CSI驱动程序`的UDS(unix domain socket)。
+      * `hostpath`卷
+        * 从主机中暴露`/var/lib/kubelet/`目录.
+        * 只挂载`/var/lib/kubelet/`到`注册CSI驱动程`容器中。
+        * 确保 [bi-directional mount propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性启用了, 以便，此容器内的任何挂载设置都将传播回主机。
+      * `hostpath`卷
+        * 暴露主机目录`/var/lib/kubelet/plugins/[SanitizedCSIDriverName]/`并设置属性`hostPath.type = "DirectoryOrCreate"`.
+        * 在挂载`注册CSI驱动程序`容器的目录上CSI gRPC服务将被创建。
+        * 这是Kubelet和`CSI卷驱动程序`容器(通过UDS的GRPC)之间的主要通信手段。
+* 让集群管理员部署上面的`StatefulSet`和`DaemonSet`来在Kubernetes集群中添加对存储系统的支持。
