@@ -64,10 +64,12 @@
 <meta property="og:site_name" content="咩咩杨 ( =•ω•= )">
 <meta property="og:description" content="CSI Volume Plugins in Kubernetes Design Doc术语   术语 解析    Container Storage Interface (CSI) 一种试图建立行业标准接口的规范，容器编排系统(COs)可以用来将任意存储系统暴露给它们的容器化工作负载。   in-tree Kubernetes 核心代码库中的代码。   out-of-tree Kubernetes">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-10-15T01:54:44.777Z">
+<meta property="og:image" content="http://anywhy.xyz/2019/10/12/k8s-csi/k8s-csi/container-storage-interface_diagram1.png?raw=true">
+<meta property="og:updated_time" content="2019-10-15T03:48:41.919Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Kubernetes CSI(Container Storage Interface) 设计">
 <meta name="twitter:description" content="CSI Volume Plugins in Kubernetes Design Doc术语   术语 解析    Container Storage Interface (CSI) 一种试图建立行业标准接口的规范，容器编排系统(COs)可以用来将任意存储系统暴露给它们的容器化工作负载。   in-tree Kubernetes 核心代码库中的代码。   out-of-tree Kubernetes">
+<meta name="twitter:image" content="http://anywhy.xyz/2019/10/12/k8s-csi/k8s-csi/container-storage-interface_diagram1.png?raw=true">
   <link rel="canonical" href="http://anywhy.xyz/2019/10/12/k8s-csi/">
 
 
@@ -260,7 +262,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-10-15 01:54:44" itemprop="dateModified" datetime="2019-10-15T01:54:44+00:00">2019-10-15</time>
+                <time title="修改时间：2019-10-15 03:48:41" itemprop="dateModified" datetime="2019-10-15T03:48:41+00:00">2019-10-15</time>
               </span>
             
           
@@ -303,7 +305,7 @@
               
                 <span class="post-meta-item-text">本文字数：</span>
               
-              <span>6.8k</span>
+              <span>14k</span>
             </span>
           
             <span class="post-meta-item" title="阅读时长">
@@ -313,7 +315,7 @@
               
                 <span class="post-meta-item-text">阅读时长 &asymp;</span>
               
-              <span>6 分钟</span>
+              <span>13 分钟</span>
             </span>
           
 
@@ -426,9 +428,125 @@
 <p>更具体地说，外部“attacher”必须代表外部CSI卷驱动程序监视Kubernetes API，以处理附加/分离请求。</p>
 <p>一旦下列条件为真，外部提供者应该针对CSI卷驱动程序调用<code>ControllerPublishVolume</code>来将卷附加到指定的节点:</p>
 <ol>
-<li>由Kubernetes attach/detach控制器创建一个新的<code>VolumeAttachment</code>Kubernetes API对象。</li>
-<li><code>VolumeAttachment.Spec.Attacher</code>值对应于外部Attacher的名称。</li>
+<li><p>由Kubernetes attach/detach控制器创建一个新的<code>VolumeAttachment</code>Kubernetes API对象。</p>
+</li>
+<li><p><code>VolumeAttachment.Spec.Attacher</code>值对应于外部Attacher的名称。</p>
+</li>
+<li><p><code>VolumeAttachment.Status.Attached</code>尚未设置为true。</p>
+</li>
+<li><ul>
+<li><p>Kubernetes节点API对象的名称与<code>VolumeAttachment.Spec.NodeName</code>匹配。节点名和该对象包含一个<code>csi.volume.kubernetes.io/nodeid</code>注解。该注释包含一个JSON blob，一个键/值对列表，其中一个键对应CSI卷驱动程序名称，该值是该驱动程序的NodeID。这个NodeId映射可以在<code>ControllerPublishVolume</code>调用中检索和使用。</p>
+</li>
+<li><p>或者存在一个<code>CSINodeInfo</code> API对象，其名称与<code>VolumeAttachment.Spec.NodeName</code>匹配。节点名和对象包含CSI卷驱动程序的<code>CSIDriverInfo</code>。<code>CSIDriverInfo</code>包含<code>ControllerPublishVolume</code>调用的<code>NodeId</code>。</p>
+</li>
+</ul>
+</li>
+<li><p><code>VolumeAttachment.Metadata.DeletionTimestamp</code>没有设置。</p>
+</li>
 </ol>
+<p>在启动<code>ControllerPublishVolume</code>操作之前， external-attacher应该将一下添加到这些Kubernetes API对象中:</p>
+<ul>
+<li><code>VolumeAttachment</code>，以便在删除对象时，external-attacher有机会首先分离卷。一旦卷与节点完全分离，external-attacher将删除该终结器。</li>
+<li>到<code>VolumeAttachment</code>引用的持久卷，因此在附加卷时不能删除PV。外部连接器需要来自PV的信息来执行分离操作。一旦所有引用PV的<code>VolumeAttachment</code>对象被删除，即该卷与所有节点分离，则attacher将删除终结器。</li>
+</ul>
+<p>如果操作成功完成，<code>external-attacher</code>将:</p>
+<ol>
+<li>设置<code>VolumeAttachment.Status.Attached</code>为true以指示附加的卷。</li>
+<li>更新<code>VolumeAttachment.Status.AttachmentMetadata</code>相应的内容并返回<code>PublishVolumeInfo</code>。</li>
+<li>清除<code>VolumeAttachment.Status.AttachError</code>错误字段</li>
+</ol>
+<p>如果操作失败，<code>external-attacher</code>将:</p>
+<ol>
+<li>确保<code>VolumeAttachment.Status.Attached</code>为false，以表示没有附加成功。</li>
+<li>设置<code>VolumeAttachment.Status.AttachError</code>为详细错误内容。</li>
+<li>创建一个针对与<code>VolumeAttachment</code>对象关联的Kubernetes API的事件，以通知用户哪里出错了。</li>
+</ol>
+<p>external-attacher可以实现自己的错误恢复策略，并在上面为附件指定的条件有效时重试。强烈建议外部连接器对重试执行指数回退策略。</p>
+<p>删除<code>VolumeAttachment</code> Kubernetes API对象将触发分离操作。因为<code>VolumeAttachment</code> Kubernetes API对象将有一个由external-attacher添加的终结器，所以它将在删除对象之前等待external-attacher的确认。</p>
+<p>一旦所有的条件都为真，external-attacher应该针对CSI卷驱动程序调用<code>ControllerUnpublishVolume</code>来将卷从指定的节点分离出来:</p>
+<ul>
+<li><code>VolumeAttachment</code> Kubernetes API对象被标记为删除:设置了<code>VolumeAttachment.metadata.deletionTimestamp</code>字段的值。</li>
+</ul>
+<p>如果操作成功完成，<code>external-attacher</code>将:</p>
+<ol>
+<li>从<code>VolumeAttachment</code>对象上的终结器列表中删除其终结器，允许删除操作继续。</li>
+</ol>
+<p>如果操作失败，<code>external-attacher</code>将:</p>
+<ol>
+<li>确保<code>VolumeAttachment.Status.Attached</code>为false，以表示没有附加成功。</li>
+<li>设置<code>VolumeAttachment.Status.AttachError</code>为详细错误内容。</li>
+<li>创建一个针对与<code>VolumeAttachment</code>对象关联的Kubernetes API的事件，以通知用户哪里出错了。</li>
+</ol>
+<p>新的API对象<code>VolumeAttachment</code>将被定义如下:</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// VolumeAttachment captures the intent to attach or detach the specified volume</span></span><br><span class="line"><span class="comment">// to/from the specified node.</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line"><span class="comment">// VolumeAttachment objects are non-namespaced.</span></span><br><span class="line"><span class="keyword">type</span> VolumeAttachment <span class="keyword">struct</span> &#123;</span><br><span class="line">  metav1.TypeMeta <span class="string">`json:",inline"`</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Standard object metadata.</span></span><br><span class="line">  <span class="comment">// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata</span></span><br><span class="line">  <span class="comment">// +optional</span></span><br><span class="line">  metav1.ObjectMeta <span class="string">`json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Specification of the desired attach/detach volume behavior.</span></span><br><span class="line">  <span class="comment">// Populated by the Kubernetes system.</span></span><br><span class="line">  Spec VolumeAttachmentSpec <span class="string">`json:"spec" protobuf:"bytes,2,opt,name=spec"`</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Status of the VolumeAttachment request.</span></span><br><span class="line">  <span class="comment">// Populated by the entity completing the attach or detach</span></span><br><span class="line">  <span class="comment">// operation, i.e. the external-attacher.</span></span><br><span class="line">  <span class="comment">// +optional</span></span><br><span class="line">  Status VolumeAttachmentStatus <span class="string">`json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// The specification of a VolumeAttachment request.</span></span><br><span class="line"><span class="keyword">type</span> VolumeAttachmentSpec <span class="keyword">struct</span> &#123;</span><br><span class="line">  <span class="comment">// Attacher indicates the name of the volume driver that MUST handle this</span></span><br><span class="line">  <span class="comment">// request. This is the name returned by GetPluginName() and must be the</span></span><br><span class="line">  <span class="comment">// same as StorageClass.Provisioner.</span></span><br><span class="line">  Attacher <span class="keyword">string</span> <span class="string">`json:"attacher" protobuf:"bytes,1,opt,name=attacher"`</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// AttachedVolumeSource represents the volume that should be attached.</span></span><br><span class="line">  VolumeSource AttachedVolumeSource <span class="string">`json:"volumeSource" protobuf:"bytes,2,opt,name=volumeSource"`</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Kubernetes node name that the volume should be attached to.</span></span><br><span class="line">  NodeName <span class="keyword">string</span> <span class="string">`json:"nodeName" protobuf:"bytes,3,opt,name=nodeName"`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// VolumeAttachmentSource represents a volume that should be attached.</span></span><br><span class="line"><span class="comment">// Right now only PersistentVolumes can be attached via external attacher,</span></span><br><span class="line"><span class="comment">// in future we may allow also inline volumes in pods.</span></span><br><span class="line"><span class="comment">// Exactly one member can be set.</span></span><br><span class="line"><span class="keyword">type</span> AttachedVolumeSource <span class="keyword">struct</span> &#123;</span><br><span class="line">  <span class="comment">// Name of the persistent volume to attach.</span></span><br><span class="line">  <span class="comment">// +optional</span></span><br><span class="line">  PersistentVolumeName *<span class="keyword">string</span> <span class="string">`json:"persistentVolumeName,omitempty" protobuf:"bytes,1,opt,name=persistentVolumeName"`</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Placeholder for *VolumeSource to accommodate inline volumes in pods.</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// The status of a VolumeAttachment request.</span></span><br><span class="line"><span class="keyword">type</span> VolumeAttachmentStatus <span class="keyword">struct</span> &#123;</span><br><span class="line">  <span class="comment">// Indicates the volume is successfully attached.</span></span><br><span class="line">  <span class="comment">// This field must only be set by the entity completing the attach</span></span><br><span class="line">  <span class="comment">// operation, i.e. the external-attacher.</span></span><br><span class="line">  Attached <span class="keyword">bool</span> <span class="string">`json:"attached" protobuf:"varint,1,opt,name=attached"`</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Upon successful attach, this field is populated with any</span></span><br><span class="line">  <span class="comment">// information returned by the attach operation that must be passed</span></span><br><span class="line">  <span class="comment">// into subsequent WaitForAttach or Mount calls.</span></span><br><span class="line">  <span class="comment">// This field must only be set by the entity completing the attach</span></span><br><span class="line">  <span class="comment">// operation, i.e. the external-attacher.</span></span><br><span class="line">  <span class="comment">// +optional</span></span><br><span class="line">  AttachmentMetadata <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span> <span class="string">`json:"attachmentMetadata,omitempty" protobuf:"bytes,2,rep,name=attachmentMetadata"`</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// The most recent error encountered during attach operation, if any.</span></span><br><span class="line">  <span class="comment">// This field must only be set by the entity completing the attach</span></span><br><span class="line">  <span class="comment">// operation, i.e. the external-attacher.</span></span><br><span class="line">  <span class="comment">// +optional</span></span><br><span class="line">    AttachError *VolumeError <span class="string">`json:"attachError,omitempty" protobuf:"bytes,3,opt,name=attachError,casttype=VolumeError"`</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// The most recent error encountered during detach operation, if any.</span></span><br><span class="line">  <span class="comment">// This field must only be set by the entity completing the detach</span></span><br><span class="line">  <span class="comment">// operation, i.e. the external-attacher.</span></span><br><span class="line">  <span class="comment">// +optional</span></span><br><span class="line">  DetachError *VolumeError <span class="string">`json:"detachError,omitempty" protobuf:"bytes,4,opt,name=detachError,casttype=VolumeError"`</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Captures an error encountered during a volume operation.</span></span><br><span class="line"><span class="keyword">type</span> VolumeError <span class="keyword">struct</span> &#123;</span><br><span class="line">  <span class="comment">// Time the error was encountered.</span></span><br><span class="line">  <span class="comment">// +optional</span></span><br><span class="line">  Time metav1.Time <span class="string">`json:"time,omitempty" protobuf:"bytes,1,opt,name=time"`</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// String detailing the error encountered during Attach or Detach operation.</span></span><br><span class="line">  <span class="comment">// This string may be logged, so it should not contain sensitive</span></span><br><span class="line">  <span class="comment">// information.</span></span><br><span class="line">  <span class="comment">// +optional</span></span><br><span class="line">  Message <span class="keyword">string</span> <span class="string">`json:"message,omitempty" protobuf:"bytes,2,opt,name=message"`</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="在Kubernetes上部署CSI驱动程序的推荐机制"><a href="#在Kubernetes上部署CSI驱动程序的推荐机制" class="headerlink" title="在Kubernetes上部署CSI驱动程序的推荐机制"></a>在Kubernetes上部署CSI驱动程序的推荐机制</h2><p>虽然Kubernetes并没有规定CSI卷驱动程序的打包，但是它提供了以下建议来简化在Kubernetes上部署容器化CSI卷驱动程序。<br><img src="k8s-csi/container-storage-interface_diagram1.png?raw=true" alt="Recommended CSI Deployment Diagram" title="Recommended CSI Deployment Diagram"></p>
+<p>要部署一个容器化的第三方CSI卷驱动程序，建议存储供应商:</p>
+<ul>
+<li><p>创建一个“CSI卷驱动程序”容器，该容器实现卷插件行为，并通过UDS(unix domain socket)公开gRPC接口，如CSI规范中定义的那样(包括控制器(Controller Service)、节点服务(Node Service)和身份服务(Identity Service))。</p>
+</li>
+<li><p>绑定“CSI卷驱动程序”容器辅助容器(external-attacher、external-provisioner node-driver-registrar, cluster-driver-registrar, external-resizer, external-snapshotter, livenessprobe) Kubernetes团队将提供(这些辅助容器将协助“CSI卷驱动程序”容器与Kubernetes交互系统)。更具体地说，创建以下Kubernetes对象:</p>
+<ul>
+<li>为了方便与Kubernetes控制器、<code>StatefulSet</code>或<code>Deployment</code>(根据用户的需要，参见集群级部署)有：<ul>
+<li>提供以下容器：<ul>
+<li>“CSI卷驱动程序”容器有存储提供商提供。</li>
+<li>Kubernetes团队提供的容器(都是可选的):<ul>
+<li><code>cluster-driver-registrar</code> (请参考“cluster-driver-registrar”存储库中的描述，必须的)</li>
+<li><code>external-provisioner</code> (必须， 提供 provision/delete 操作)</li>
+<li><code>external-attacher</code> (必须， 提供attach/detach 操作. 如果您希望跳过附加步骤，除了忽略此容器外，还必须在Kubernetes中启用CSISkipAttach特性)</li>
+<li><code>external-resizer</code> (必须， 提供resize操作)</li>
+<li><code>external-snapshotter</code> (必须，提供volume-level快照操作)</li>
+<li><code>livenessprobe</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li>提供以下容器:<ul>
+<li><code>emptyDir</code> 卷</li>
+<li>挂载所有的容器,包括 “CSI卷驱动程序”.</li>
+<li>“CSI卷驱动程序”容器应该在相应的目录中创建它的UDS，以便与Kubernetes帮助容器进行通信。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>一个<code>DaemonSet</code>(为了方便与kubelet的每个实例进行通信)，它具有:<ul>
+<li>提供以下容器<ul>
+<li>“CSI卷驱动程序”容器有存储提供商提供。</li>
+<li>Kubernetes团队提供的容器：<ul>
+<li><code>node-driver-registrar</code> - 负责向kubelet注册UDS(unix domain socket)。</li>
+<li><code>livenessprobe</code> (可选)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>提供以下存储卷:<ul>
+<li><code>hostpath</code>卷<ul>
+<li>从主机中暴露<code>/var/lib/kubelet/plugins_registry</code>目录。</li>
+<li>只在<code>node-driver-registrar</code>容器中挂载<code>/registration</code>目录。</li>
+<li><code>node-driver-registrar</code> 将使用此UDS(unix domain socket)向kubelet<code>注册CSI驱动程序</code>的UDS(unix domain socket)。</li>
+</ul>
+</li>
+<li><code>hostpath</code>卷<ul>
+<li>从主机中暴露<code>/var/lib/kubelet/</code>目录.</li>
+<li>只挂载<code>/var/lib/kubelet/</code>到<code>注册CSI驱动程</code>容器中。</li>
+<li>确保 <a href="https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation" target="_blank" rel="noopener">bi-directional mount propagation</a> 特性启用了, 以便，此容器内的任何挂载设置都将传播回主机。</li>
+</ul>
+</li>
+<li><code>hostpath</code>卷<ul>
+<li>暴露主机目录<code>/var/lib/kubelet/plugins/[SanitizedCSIDriverName]/</code>并设置属性<code>hostPath.type = &quot;DirectoryOrCreate&quot;</code>.</li>
+<li>在挂载<code>注册CSI驱动程序</code>容器的目录上CSI gRPC服务将被创建。</li>
+<li>这是Kubelet和<code>CSI卷驱动程序</code>容器(通过UDS的GRPC)之间的主要通信手段。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>让集群管理员部署上面的<code>StatefulSet</code>和<code>DaemonSet</code>来在Kubernetes集群中添加对存储系统的支持。</p>
+</li>
+</ul>
 
     </div>
 
@@ -502,7 +620,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#CSI-Volume-Plugins-in-Kubernetes-Design-Doc"><span class="nav-number">1.</span> <span class="nav-text">CSI Volume Plugins in Kubernetes Design Doc</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#术语"><span class="nav-number">1.1.</span> <span class="nav-text">术语</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#背景-amp-动机"><span class="nav-number">1.2.</span> <span class="nav-text">背景&amp;动机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.3.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#设计详情"><span class="nav-number">1.4.</span> <span class="nav-text">设计详情</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第三方-CSI-Volume-Drivers"><span class="nav-number">1.4.1.</span> <span class="nav-text">第三方 CSI Volume Drivers</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通信机制"><span class="nav-number">1.4.2.</span> <span class="nav-text">通信机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Kubelet-到-CSI驱动"><span class="nav-number">1.4.2.1.</span> <span class="nav-text">Kubelet 到 CSI驱动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Master到CSI驱动通信"><span class="nav-number">1.4.2.2.</span> <span class="nav-text">Master到CSI驱动通信</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#配置和删除"><span class="nav-number">1.4.2.2.1.</span> <span class="nav-text">配置和删除</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#附加和分离"><span class="nav-number">1.4.2.2.2.</span> <span class="nav-text">附加和分离</span></a></li></ol></li></ol></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#CSI-Volume-Plugins-in-Kubernetes-Design-Doc"><span class="nav-number">1.</span> <span class="nav-text">CSI Volume Plugins in Kubernetes Design Doc</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#术语"><span class="nav-number">1.1.</span> <span class="nav-text">术语</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#背景-amp-动机"><span class="nav-number">1.2.</span> <span class="nav-text">背景&amp;动机</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#概述"><span class="nav-number">1.3.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#设计详情"><span class="nav-number">1.4.</span> <span class="nav-text">设计详情</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#第三方-CSI-Volume-Drivers"><span class="nav-number">1.4.1.</span> <span class="nav-text">第三方 CSI Volume Drivers</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#通信机制"><span class="nav-number">1.4.2.</span> <span class="nav-text">通信机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Kubelet-到-CSI驱动"><span class="nav-number">1.4.2.1.</span> <span class="nav-text">Kubelet 到 CSI驱动</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Master到CSI驱动通信"><span class="nav-number">1.4.2.2.</span> <span class="nav-text">Master到CSI驱动通信</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#配置和删除"><span class="nav-number">1.4.2.2.1.</span> <span class="nav-text">配置和删除</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#附加和分离"><span class="nav-number">1.4.2.2.2.</span> <span class="nav-text">附加和分离</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#在Kubernetes上部署CSI驱动程序的推荐机制"><span class="nav-number">1.5.</span> <span class="nav-text">在Kubernetes上部署CSI驱动程序的推荐机制</span></a></li></ol></li></ol></div>
         
       </div>
       <!--/noindex-->
@@ -631,14 +749,14 @@
     </span>
       <span class="post-meta-item-text">站点总字数：</span>
     
-    <span title="站点总字数">7k</span>
+    <span title="站点总字数">14k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
     
-    <span title="站点阅读时长">6 分钟</span>
+    <span title="站点阅读时长">13 分钟</span>
 </div>
   <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
   <span class="post-meta-divider">|</span>
