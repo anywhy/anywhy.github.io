@@ -19,6 +19,8 @@ CAS:Compare and Swap, 翻译成比较并交换。
 * AtomicBoolean
 * AtomicInteger
 
+<!-- more -->
+
 具体如何使用呢？看个小小的demo，代码如下：
 
 ```java
