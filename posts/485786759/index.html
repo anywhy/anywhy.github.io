@@ -56,18 +56,18 @@
   };
 </script>
 
-  <meta name="description" content="CAS操作原理分析CAS:Compare and Swap, 翻译成比较并交换。在Java中，java.util.concurrent包中借助了CAS实现了线程同步的一种乐观锁，区别于synchronized（悲观锁），不会导致需要锁的线程都挂起。 在Java中也提供了这种操作类，例如：  AtomicBoolean AtomicInteger  具体如何使用呢？看个小小的demo，代码如下： 1">
+  <meta name="description" content="CAS操作原理分析CAS:Compare and Swap, 翻译成比较并交换。在Java中，java.util.concurrent包中借助了CAS实现了线程同步的一种乐观锁，区别于synchronized（悲观锁），不会导致需要锁的线程都挂起。 在Java中也提供了这种操作类，例如：  AtomicBoolean AtomicInteger">
 <meta name="keywords" content="Java,CAS">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Java CAS 原理解析">
 <meta property="og:url" content="http://anywhy.xyz/posts/485786759/index.html">
 <meta property="og:site_name" content="咩咩杨 ( =•ω•= )">
-<meta property="og:description" content="CAS操作原理分析CAS:Compare and Swap, 翻译成比较并交换。在Java中，java.util.concurrent包中借助了CAS实现了线程同步的一种乐观锁，区别于synchronized（悲观锁），不会导致需要锁的线程都挂起。 在Java中也提供了这种操作类，例如：  AtomicBoolean AtomicInteger  具体如何使用呢？看个小小的demo，代码如下： 1">
+<meta property="og:description" content="CAS操作原理分析CAS:Compare and Swap, 翻译成比较并交换。在Java中，java.util.concurrent包中借助了CAS实现了线程同步的一种乐观锁，区别于synchronized（悲观锁），不会导致需要锁的线程都挂起。 在Java中也提供了这种操作类，例如：  AtomicBoolean AtomicInteger">
 <meta property="og:locale" content="zh-CN">
-<meta property="og:updated_time" content="2019-10-16T04:34:01.940Z">
+<meta property="og:updated_time" content="2019-10-16T04:46:40.744Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Java CAS 原理解析">
-<meta name="twitter:description" content="CAS操作原理分析CAS:Compare and Swap, 翻译成比较并交换。在Java中，java.util.concurrent包中借助了CAS实现了线程同步的一种乐观锁，区别于synchronized（悲观锁），不会导致需要锁的线程都挂起。 在Java中也提供了这种操作类，例如：  AtomicBoolean AtomicInteger  具体如何使用呢？看个小小的demo，代码如下： 1">
+<meta name="twitter:description" content="CAS操作原理分析CAS:Compare and Swap, 翻译成比较并交换。在Java中，java.util.concurrent包中借助了CAS实现了线程同步的一种乐观锁，区别于synchronized（悲观锁），不会导致需要锁的线程都挂起。 在Java中也提供了这种操作类，例如：  AtomicBoolean AtomicInteger">
   <link rel="canonical" href="http://anywhy.xyz/posts/485786759/">
 
 
@@ -276,7 +276,7 @@
                 
               
 
-              <time title="创建时间：2019-10-16 12:32:29 / 修改时间：04:34:01" itemprop="dateCreated datePublished" datetime="2019-10-16T12:32:29+00:00">2019-10-16</time>
+              <time title="创建时间：2019-10-16 12:32:29 / 修改时间：04:46:40" itemprop="dateCreated datePublished" datetime="2019-10-16T12:32:29+00:00">2019-10-16</time>
             </span>
           
             
@@ -343,6 +343,8 @@
 <li>AtomicBoolean</li>
 <li>AtomicInteger</li>
 </ul>
+<a id="more"></a>
+
 <p>具体如何使用呢？看个小小的demo，代码如下：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Demo</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> AtomicInteger ai = <span class="keyword">new</span> AtomicInteger(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">increment</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 自增 1并返回之后的结果</span></span><br><span class="line">        ai.incrementAndGet();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 

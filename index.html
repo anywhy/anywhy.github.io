@@ -275,7 +275,7 @@
                 
               
 
-              <time title="创建时间：2019-10-16 12:32:29 / 修改时间：04:34:01" itemprop="dateCreated datePublished" datetime="2019-10-16T12:32:29+00:00">2019-10-16</time>
+              <time title="创建时间：2019-10-16 12:32:29 / 修改时间：04:46:40" itemprop="dateCreated datePublished" datetime="2019-10-16T12:32:29+00:00">2019-10-16</time>
             </span>
           
             
@@ -334,46 +334,15 @@
 <li>AtomicBoolean</li>
 <li>AtomicInteger</li>
 </ul>
-<p>具体如何使用呢？看个小小的demo，代码如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Demo</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> AtomicInteger ai = <span class="keyword">new</span> AtomicInteger(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">increment</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 自增 1并返回之后的结果</span></span><br><span class="line">        ai.incrementAndGet();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="CAS-原理"><a href="#CAS-原理" class="headerlink" title="CAS 原理"></a>CAS 原理</h3><p>CAS有3个操作数，内存值V，旧的预期值A，要修改的新值B。当且仅当预期值A和内存值V相同时，将内存值V修改为B，否则什么都不做。CAS采用的是一种非阻塞算法（nonblocking algorithms），一个线程的失败或者挂起不应该影响其他线程的失败或挂起的算法。在Java中是通过调用JNI实现的。</p>
-<p>例如上述demo中<code>AtomicInteger</code>实现:</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AtomicInteger</span> <span class="keyword">extends</span> <span class="title">Number</span> <span class="keyword">implements</span> <span class="title">java</span>.<span class="title">io</span>.<span class="title">Serializable</span> </span>&#123;</span><br><span class="line">     ......</span><br><span class="line">    <span class="comment">// setup to use Unsafe.compareAndSwapInt for updates</span></span><br><span class="line">    <span class="comment">// 调用JNI的辅助类</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Unsafe unsafe = Unsafe.getUnsafe();</span><br><span class="line"></span><br><span class="line">     <span class="comment">// 定义了volatile类型变量</span></span><br><span class="line">     <span class="comment">// 通过volatile关键字来保证多线程间数据的可见性的, 在没有锁的机制下可能需要借助volatile原语，保证线程间的数据是可见的（共享的）。这样才获取变量的值的时候才能直接读取。</span></span><br><span class="line">     <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">int</span> value;</span><br><span class="line"></span><br><span class="line">     .....</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">compareAndSet</span><span class="params">(<span class="keyword">int</span> expect, <span class="keyword">int</span> update)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 利用JNI来完成CPU指令的操作</span></span><br><span class="line">        <span class="keyword">return</span> unsafe.compareAndSwapInt(<span class="keyword">this</span>, valueOffset, expect, update);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>在上述实现用<code>unsafe.compareAndSwapInt</code>通过JNI调用了底层系统CUP指令实现原子性操作。</p>
-<ul>
-<li><p>代码片段如下：</p>
-<pre><code class="c"><span class="comment">// Adding a lock prefix to an instruction on MP machine</span>
-<span class="comment">// VC++ doesn't like the lock prefix to be on a single line</span>
-<span class="comment">// so we can't insert a label after the lock prefix.</span>
-<span class="comment">// By emitting a lock prefix, we can define a label after it.</span>
-<span class="meta">#<span class="meta-keyword">define</span> LOCK_IF_MP(mp) __asm cmp mp, 0  \</span>
-                    __asm je L0      \
-                    __asm _emit <span class="number">0xF0</span> \
-                    __asm L0:
-
-<span class="keyword">inline</span> jint     Atomic::cmpxchg    (jint     exchange_value, <span class="keyword">volatile</span> jint*     dest, jint     compare_value) {
-<span class="comment">// alternative for InterlockedCompareExchange</span>
-<span class="keyword">int</span> mp = os::is_MP();
-__asm {
-    mov edx, dest
-    mov ecx, exchange_value
-    mov eax, compare_value
-    LOCK_IF_MP(mp)
-    cmpxchg dword ptr [edx], ecx
-}
-}</code></pre>
-</li>
-<li><p><code>cmpxchg</code> 是汇编指令，用于比较并交换操作数。根据CPU处理器源代码所示，程序会根据当前处理器的类型来决定是否为cmpxchg指令添加lock前缀。如果程序是在多处理器上运行，就为cmpxchg指令加上lock前缀（lock cmpxchg）。反之，如果程序是在单处理器上运行，就省略lock前缀（单处理器自身会维护单处理器内的顺序一致性，不需要lock前缀提供的内存屏障效果）。</p>
-</li>
-</ul>
-</li>
-</ul>
-<h2 id="CAS可能出现的问题-ABA"><a href="#CAS可能出现的问题-ABA" class="headerlink" title="CAS可能出现的问题(ABA)"></a>CAS可能出现的问题(ABA)</h2><p>虽然这种 CAS 的机制能够保证increment() 方法，但依然有一些问题，例如，当线程A即将要执行第三步的时候，线程 B 把 i 的值加1，之后又马上把 i 的值减 1，然后，线程 A 执行第三步，这个时候线程 A 是认为并没有人修改过 i 的值，因为 i 的值并没有发生改变。而这，就是我们平常说的<code>ABA</code>问题。<br>对于基本类型的值来说，这种把数字改变了在改回原来的值是没有太大影响的，但如果是对于引用类型的话，就会产生很大的影响了。</p>
-<p>如何解决ABA？<br>为了解决这个 ABA 的问题，我们可以引入版本控制，例如，每次有线程修改了引用的值，就会进行版本的更新，虽然两个线程持有相同的引用，但他们的版本不同，这样，我们就可以预防 <code>ABA</code> 问题了。Java 中提供了 AtomicStampedReference 这个类，就可以进行版本控制了。</p>
-
+          <!--noindex-->
+          
+            <div class="post-button">
+              <a class="btn" href="/posts/485786759/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          
+          <!--/noindex-->
         
       
     </div>
@@ -437,7 +406,7 @@ __asm {
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-10-16 04:34:01" itemprop="dateModified" datetime="2019-10-16T04:34:01+00:00">2019-10-16</time>
+                <time title="修改时间：2019-10-16 04:46:40" itemprop="dateModified" datetime="2019-10-16T04:46:40+00:00">2019-10-16</time>
               </span>
             
           
