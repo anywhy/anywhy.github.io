@@ -15,8 +15,14 @@ timezone:
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
 url: http://anywhy.xyz
 root: /
-permalink: :year/:month/:day/:title/
+#permalink: :year/:month/:day/:title/
+permalink: posts/:abbrlink/
 permalink_defaults:
+
+# abbrlink config
+abbrlink:
+  alg: crc32  #support crc16(default) and crc32
+  rep: dec    #support dec(default) and hex
 
 # Directory
 source_dir: source
@@ -112,6 +118,12 @@ symbols_count_time:
   # 是否移除代码块
   exclude_codeblock: false
 
+search:
+  path: search.xml
+  field: post
+  format: html
+  limit: 10000
+  
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:

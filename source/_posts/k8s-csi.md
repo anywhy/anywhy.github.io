@@ -1,8 +1,12 @@
 ---
 title: Kubernetes CSI(Container Storage Interface) 设计
-date: 2019-10-12 11:21:08
 categories: Kubernetes
-tags: [CSI,k8s,storage]
+tags:
+  - CSI
+  - k8s
+  - storage
+abbrlink: 2603569835
+date: 2019-10-12 11:21:08
 ---
 
 # CSI Volume Plugins in Kubernetes Design Doc
