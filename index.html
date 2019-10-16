@@ -44,8 +44,8 @@
       hits: {"per_page":10},
       labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
     },
-    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
-    path: '',
+    localsearch: {"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: 'search.xml',
     motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
     translation: {
       copy_button: '复制',
@@ -191,11 +191,38 @@
     <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
 
   </li>
+      <li class="menu-item menu-item-search">
+        <a href="javascript:;" class="popup-trigger">
+        
+          <i class="fa fa-search fa-fw"></i>搜索</a>
+      </li>
+    
   </ul>
 
     
 
 </nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="none"
+           placeholder="搜索..." spellcheck="false"
+           type="text" id="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
 </div>
     </header>
 
@@ -219,7 +246,7 @@
   
   
   <div class="post-block home">
-    <link itemprop="mainEntityOfPage" href="http://anywhy.xyz/2019/10/12/k8s-csi/">
+    <link itemprop="mainEntityOfPage" href="http://anywhy.xyz/posts/2603569835/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Anywhy  ( =•ω•= )">
@@ -233,7 +260,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
             
-            <a href="/2019/10/12/k8s-csi/" class="post-title-link" itemprop="url">Kubernetes CSI(Container Storage Interface) 设计</a>
+            <a href="/posts/2603569835/" class="post-title-link" itemprop="url">Kubernetes CSI(Container Storage Interface) 设计</a>
           
         </h2>
 
@@ -259,7 +286,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-10-16 01:50:50" itemprop="dateModified" datetime="2019-10-16T01:50:50+00:00">2019-10-16</time>
+                <time title="修改时间：2019-10-16 02:24:10" itemprop="dateModified" datetime="2019-10-16T02:24:10+00:00">2019-10-16</time>
               </span>
             
           
@@ -340,7 +367,7 @@
           <!--noindex-->
           
             <div class="post-button">
-              <a class="btn" href="/2019/10/12/k8s-csi/#more" rel="contents">
+              <a class="btn" href="/posts/2603569835/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
@@ -533,9 +560,6 @@
     
     <span title="站点阅读时长">13 分钟</span>
 </div>
-  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
-  <span class="post-meta-divider">|</span>
-  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.4.0</div>
 
         
 <div class="busuanzi-count">
@@ -601,6 +625,8 @@
 
 
 
+
+  <script src="/js/local-search.js?v=7.4.0"></script>
 
 
 
