@@ -7,7 +7,7 @@
 # If true, will fully override default configuration by options from `_data/next.yml` (override). Only for NexT settings.
 # And if true, all config from default NexT `_config.yml` must be copied into `next.yml`. Use if you know what you are doing.
 # Useful if you want to comment some options from NexT `_config.yml` by `next.yml` without editing default config.
-override: false
+override: true
 
 # Console reminder if new version released.
 reminder: false
@@ -277,7 +277,7 @@ symbols_count_time:
   wpm: 275
 
 # Use icon instead of the symbol # to indicate the tag at the bottom of the post
-tag_icon: false
+tag_icon: true
 
 # Wechat Subscriber
 wechat_subscriber:
