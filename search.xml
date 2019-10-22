@@ -60,9 +60,9 @@ __asm {
       </tags>
   </entry>
   <entry>
-    <title>Kubernetes CSI(Container Storage Interface) 设计</title>
+    <title>Kubernetes CSI(Container Storage Interface) 设计文档</title>
     <url>/posts/2603569835/</url>
-    <content><![CDATA[<h1 id="CSI-Volume-Plugins-in-Kubernetes-Design-Doc"><a href="#CSI-Volume-Plugins-in-Kubernetes-Design-Doc" class="headerlink" title="CSI Volume Plugins in Kubernetes Design Doc"></a>CSI Volume Plugins in Kubernetes Design Doc</h1><h2 id="术语"><a href="#术语" class="headerlink" title="术语"></a>术语</h2><table>
+    <content><![CDATA[<h2 id="CSI-Volume-Plugins-in-Kubernetes-Design-Doc"><a href="#CSI-Volume-Plugins-in-Kubernetes-Design-Doc" class="headerlink" title="CSI Volume Plugins in Kubernetes Design Doc"></a>CSI Volume Plugins in Kubernetes Design Doc</h2><h2 id="术语"><a href="#术语" class="headerlink" title="术语"></a>术语</h2><table>
 <thead>
 <tr>
 <th>术语</th>
@@ -287,8 +287,8 @@ __asm {
       </categories>
       <tags>
         <tag>CSI</tag>
-        <tag>k8s</tag>
         <tag>storage</tag>
+        <tag>k8s</tag>
       </tags>
   </entry>
 </search>
