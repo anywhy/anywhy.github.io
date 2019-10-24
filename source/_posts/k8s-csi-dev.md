@@ -23,6 +23,7 @@ date: 2019-10-24 11:44:55
 | v1.10      | [v0.2.0](https://github.com/container-storage-interface/spec/releases/tag/v0.2.0)     | Beta   |
 | v1.11      | [v0.3.0](https://github.com/container-storage-interface/spec/releases/tag/v0.3.0)     | Beta   |
 | v1.13      | [v0.3.0](https://github.com/container-storage-interface/spec/releases/tag/v0.3.0), [v1.0.0](https://github.com/container-storage-interface/spec/releases/tag/v1.0.0) | GA     |
+
 <!-- more -->
 ### 开发与部署
 
