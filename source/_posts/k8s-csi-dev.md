@@ -5,7 +5,9 @@ tags:
   - Kubernetes
   - CSI
   - storage
+date: 2019-10-24 11:44:55
 ---
+
 
 ## 简介
 
@@ -147,8 +149,8 @@ Kubernetes API包含以下CSI特定对象:
 
 #### 状态
 
-Kubernetes 1.12 - 1.13: Alpha
-Kubernetes 1.14: Beta
+* Kubernetes 1.12 - 1.13: Alpha
+* Kubernetes 1.14: Beta
 
 #### 什么是 CSIDriver Object
 
@@ -197,4 +199,230 @@ Kubernetes 1.14: Beta
   * 这个字段是在Kubernetes 1.16中添加的，在使用较老的Kubernetes版本时无法设置。
   * 它通知Kubernetes有关驱动程序支持的降级模式。这可以确保用户没有错误地使用驱动程序。默认值是`Persistent`，这是常规的PVC/PV机制。此外，`Ephemeral`还支持[inline ephemeral volumes](https://kubernetes-csi.github.io/docs/ephemeral-local-volumes.html)(当两者都被列出时)或代替普通卷(当它是列表中唯一的一个条目时)。
 
+#### 是什么创建了CSIDriver对象
+
+要安装，CSI驱动程序的部署清单必须包含如上例所示的CSIDriver对象。
+
+> 注意:Kubernetes 1.13中用于创建CSIDriver对象的cluster-driver-registrar边车(Sidecar)容器已经被Kubernetes 1.16所弃用。Kubernetes 1.14及以后版本还没有发布集群驱动程序注册表。
+
+`CSIDriver`实例应该存在于所有使用相应的CSI驱动程序提供的卷的POD整个生命周期中，所以[Skip Attach](https://github.com/kubernetes-csi/docs/blob/master/book/src/skip-attach.md)和[Pod Info on Mount](https://github.com/kubernetes-csi/docs/blob/master/book/src/pod-info.md)可以正确工作。
+
+#### 查看CSDriver注册清单
+
+使用CSIDriver对象，现在可以查询Kubernetes来获得在集群中运行的注册驱动程序列表，如下所示:
+
+```shell
+$> kubectl get csidrivers.storage.k8s.io
+NAME                  CREATED AT
+hostpath.csi.k8s.io   2019-09-13T09:58:43Z
+```
+
+或着取得更详细的信息，你的注册司机与:
+
+``` shell
+$> kubectl describe csidrivers.storage.k8s.io
+Name:         hostpath.csi.k8s.io
+Namespace:    
+Labels:       <none>
+Annotations:  kubectl.kubernetes.io/last-applied-configuration:
+                {"apiVersion":"storage.k8s.io/v1beta1","kind":"CSIDriver","metadata":{"annotations":{},"name":"hostpath.csi.k8s.io"},"spec":{"podInfoOnMou...
+API Version:  storage.k8s.io/v1beta1
+Kind:         CSIDriver
+Metadata:
+  Creation Timestamp:  2019-09-13T09:58:43Z
+  Resource Version:    341
+  Self Link:           /apis/storage.k8s.io/v1beta1/csidrivers/hostpath.csi.k8s.io
+  UID:                 1860f2a1-85f8-4357-a933-c45e54f0c8e0
+Spec:
+  Attach Required:    true
+  Pod Info On Mount:  true
+  Volume Lifecycle Modes:
+    Persistent
+    Ephemeral
+Events:  <none>
+```
+
+#### Alpha to Beta版本的变化
+
+在开发过程中，CSIDriver对象也被定义为自定义资源定义(CRD)。作为升级到beta的一部分，该对象已被移动到内置的Kubernetes API。
+
+在从alpha迁移到beta的过程中，该对象的API组从`csi.storage.k8s.io/v1alpha1`更改为`storage.k8s.io/v1beta1`。
+
+在Kubernetes更新到新的内置类型时，不会自动更新现有的CRD及其CRs。
+
+#### Kubernetes启用CSIDriver
+
+在Kubernetes v1.12和v1.13中，因为这个特性是alpha版本，所以默认情况下是禁用的。要在这些版本中使用CSIDriver，请执行以下操作:
+
+1. 通过以下Kubernetes特性标志确保启用特性门: `--feature-gates=CSIDriverRegistry=true`
+2. 要么通过Kubernetes存储CRD插件确保CSIDriver CRD是自动安装的，要么使用以下命令在Kubernetes集群上手动安装CSIDriver CRD:
+
+```shell
+$> kubectl create -f https://raw.githubusercontent.com/kubernetes/csi-api/master/pkg/crd/manifests/csidriver.yaml
+```
+
+Kubernetes v1.14+使用了相同的Kubernetes特性标志，但是由于该特性是beta版，所以默认启用了它。由于API类型(从beta版开始)内建在Kubernetes API中，因此不再需要安装CRD。
+
 ### CSINode Object
+
+#### 状态
+
+* Kubernetes 1.12 - 1.13: Alpha
+* Kubernetes 1.14: Beta
+
+#### 什么是 CSINode Object
+
+CSI驱动程序生成特定于节点的信息。不是将其存储在Kubernetes节点API对象中，而是创建了一个新的CSI特定的Kubernetes CSINode对象。
+
+它的用途如下:
+
+1. Kubernetes Node name 和 CSI Node name之间的映射
+
+* CSI `GetNodeInfo`调用返回存储系统引用节点的名称。Kubernetes必须在将来的`ControllerPublishVolume`调用中使用这个名称。因此，当注册一个新的CSI驱动程序时，Kubernetes将存储系统节点ID存储在`CSINode`对象中，以供将来参考。
+
+2. 驱动程序可用性
+
+*  kubelet与kube-controller-manager和kubernetes调度器通信的一种方式，不管驱动程序在节点上是否可用(已注册)。
+
+3. 卷的拓扑
+
+* CSI `GetNodeInfo`调用返回一组标识该节点拓扑结构的键/值标签。Kubernetes使用这些信息进行拓扑感知供应(有关详细信息，请参阅PVC卷绑定模式)。它将键/值作为标签存储在Kubernetes节点对象上。为了回忆起哪个节点标签键属于一个特定的CSI驱动程序，kubelet将这些键存储在`CSINode`对象中以供将来参考。
+
+#### CSINode 对象属性
+
+下面是一个v1beta1 `CSINode`对象的例子:
+
+```yaml
+apiVersion: storage.k8s.io/v1beta1
+kind: CSINodeInfo
+metadata:
+  name: node1
+spec:
+  drivers:
+  - name: mycsidriver.example.com
+    nodeID: storageNodeID1
+    topologyKeys: ['mycsidriver.example.com/regions', "mycsidriver.example.com/zones"]
+```
+
+字段的含义：
+
+* `drivers`- 运行在节点上的CSI驱动程序及其属性列表。
+* `name` - 此对象引用的CSI驱动程序。
+* `nodeID` - 由驱动程序确定的节点的指定标识符。
+* `topologyKeys` - 驱动程序支持的分配给节点的拓扑密钥列表。
+
+#### 是什么创建了CSINode对象
+
+CSI驱动程序不需要直接创建`CSINode`对象。相反，它们应该使用`node-driver-registrar`边车(Sidecar)容器。这个边车(Sidecar)容器将通过kubelet插件注册机制与kubelet交互，代表CSI驱动程序自动填充`CSINode`对象。
+
+#### Alpha to Beta版本的变化
+
+alpha对象称为`CSINodeInfo`，而beta对象称为`CSINode`。alpha `CSINodeInfo`对象也被定义为自定义资源定义(CRD)。作为升级到beta的一部分，该对象已被移动到内置的Kubernetes API。
+
+在从alpha迁移到beta的过程中，该对象的API组从`csi.storage.k8s.io/v1alpha1`更改为`csi.storage.k8s.io/v1beta1`。
+
+在Kubernetes更新到新的内置类型时，不会自动更新现有的CRD及其CRs。
+
+
+#### Kubernetes启用CSIDriver
+
+在Kubernetes v1.12和v1.13中，因为这个特性是alpha版本，所以默认情况下是禁用的。要在这些版本中使用CSINodeInfo，请执行以下操作:
+
+1. 确保使用`--features-gates=CSINodeInfo=true`启用功能。
+2. 要么通过Kubernetes存储CRD插件确保`CSIDriver`CRD是自动安装的，要么使用以下命令在Kubernetes集群上手动安装`CSINodeInfo`CRD:
+
+```shell
+$> kubectl create -f https://raw.githubusercontent.com/kubernetes/csi-api/master/pkg/crd/manifests/csinodeinfo.yaml
+```
+
+Kubernetes v1.14+使用了相同的Kubernetes特性标志，但是由于该特性是beta版，所以默认启用了它。由于API类型(从beta版开始)内建在Kubernetes API中，因此不再需要安装CRD。
+
+### Kubernetes上安装CSI插件
+
+#### 概述
+
+CSI驱动程序通常作为两个组件部署在Kubernetes中:控制器组件和每个节点组件。
+
+#### Controller 插件
+
+控制器组件可以作为部署或状态集部署在集群中的任何节点上。它由实现CSI控制器服务的CSI驱动程序和一个或多个边车(Sidecar)容器组成。这些控制器边车(Sidecar)容器通常与Kubernetes对象交互，并调用驱动程序的CSI控制器服务。
+
+它通常不需要直接访问主机，可以通过Kubernetes API和外部控制平面服务执行所有操作。可以为HA部署控制器组件的多个副本，但是建议使用leader election来确保一次只有一个活动控制器。
+
+控制器(Sidecar)容器包含`external-provisioner`,`external-attacher`,`external-snapshotter`和`external-resizer`。 在部署中包含一个边车(Sidecar)容器是可选的。
+
+##### 与边车(Sidecar)通信
+
+![CSI Controller Deployment Diagram](sidecar-container.png?raw=true "CSI Controller Deployment Diagram")
+
+边车(Sidecar)容器管理Kubernetes事件并适当地调用CSI驱动程序。调用是通过边车(Sidecars)容器和CSI驱动程序之间的emptyDir卷共享一个UDS进行的。
+
+##### RBAC 策略
+
+大多数控制器边车与Kubernetes对象交互，因此需要设置RBAC策略。每个sidecar存储库都包含示例RBAC配置。
+
+#### Node 插件
+
+节点组件应该通过一个守护进程部署在集群中的每个节点上。它由实现CSI节点服务的CSI驱动程序和node-driver-registrar边车(Sidecar)容器组成。
+
+##### 与Kubelet通信
+
+![CSI Node Deployment Diagram](kubelet.png?raw=true "CSI Node Deployment Diagram")
+
+Kubernetes kubelet在每个节点上运行，负责发出CSI节点服务调用。这些调用从存储系统挂载和卸载存储卷，使之可供Pod使用。Kubelet通过主机上通过主机路径卷共享的UDS调用CSI驱动程序。node-driver-registrar还使用第二个UDS将CSI驱动程序注册到kubelet。
+
+#### 驱动卷挂载
+
+节点插件需要直接访问主机，以使块设备和/或文件系统安装对Kubernetes kubelet可用。
+
+CSI驱动程序使用的挂载点必须设置为双向，以允许主机上的Kubelet看到CSI驱动程序容器创建的挂载。请看下面的例子:
+
+``` yaml
+      containers:
+      - name: my-csi-driver
+        ...
+        volumeMounts:
+        - name: socket-dir
+          mountPath: /csi
+        - name: mountpoint-dir
+          mountPath: /var/lib/kubelet/pods
+          mountPropagation: "Bidirectional"
+      - name: node-driver-registrar
+        ...
+        volumeMounts:
+        - name: registration-dir
+          mountPath: /registration
+      volumes:
+      # This volume is where the socket for kubelet->driver communication is done
+      - name: socket-dir
+        hostPath:
+          path: /var/lib/kubelet/plugins/<driver-name>
+          type: DirectoryOrCreate
+      # This volume is where the driver mounts volumes
+      - name: mountpoint-dir
+        hostPath:
+          path: /var/lib/kubelet/pods
+          type: Directory
+      # This volume is where the node-driver-registrar registers the plugin
+      # with kubelet
+      - name: registration-dir
+        hostPath:
+          path: /var/lib/kubelet/plugins_registry
+          type: Directory
+```
+
+#### 启用特权POD
+
+要使用CSI驱动程序，Kubernetes集群必须允许特权pod(即API服务器和kubelet必须将--allow-privileged标志设置为true)。这是某些环境(例如GCE、GKE、kubeadm)的默认设置。
+
+确保你的API服务器启动与特权标志:
+
+```shell
+$ ./kube-apiserver ...  --allow-privileged=true ...
+```
+
+```shell
+$ ./kubelet ...  --allow-privileged=true ...
+```
+
+> 注意:从Kubernetes 1.13.0开始，——对kubelet来说允许特权是正确的。在未来的kubernetes版本中，它将被弃用。
