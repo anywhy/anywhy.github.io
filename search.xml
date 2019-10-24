@@ -33,18 +33,9 @@
 <td><a href="https://github.com/container-storage-interface/spec/releases/tag/v0.3.0" target="_blank" rel="noopener">v0.3.0</a>, <a href="https://github.com/container-storage-interface/spec/releases/tag/v1.0.0" target="_blank" rel="noopener">v1.0.0</a></td>
 <td>GA</td>
 </tr>
-<tr>
-<td><a id="more"></a></td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td>### 开发与部署</td>
-<td></td>
-<td></td>
-</tr>
 </tbody></table>
-<h4 id="最低要求-为Kubernetes开发和部署CSI驱动程序"><a href="#最低要求-为Kubernetes开发和部署CSI驱动程序" class="headerlink" title="最低要求(为Kubernetes开发和部署CSI驱动程序)"></a>最低要求(为Kubernetes开发和部署CSI驱动程序)</h4><p>Kubernetes尽可能少地规定了CSI卷驱动程序的打包和部署。唯一的需求是Kubernetes(Master和Node)组件如何查找和与CSI驱动程序通信。</p>
+<a id="more"></a>
+<h3 id="开发与部署"><a href="#开发与部署" class="headerlink" title="开发与部署"></a>开发与部署</h3><h4 id="最低要求-为Kubernetes开发和部署CSI驱动程序"><a href="#最低要求-为Kubernetes开发和部署CSI驱动程序" class="headerlink" title="最低要求(为Kubernetes开发和部署CSI驱动程序)"></a>最低要求(为Kubernetes开发和部署CSI驱动程序)</h4><p>Kubernetes尽可能少地规定了CSI卷驱动程序的打包和部署。唯一的需求是Kubernetes(Master和Node)组件如何查找和与CSI驱动程序通信。</p>
 <p>具体来说，以下是Kubernetes关于CSI的描述:</p>
 <ul>
 <li>Kubelet与CSI通信：<ul>
