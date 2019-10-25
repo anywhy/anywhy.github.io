@@ -66,7 +66,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://anywhy.xyz/posts/1079750075/sidecar-container.png?raw=true">
 <meta property="og:image" content="http://anywhy.xyz/posts/1079750075/kubelet.png?raw=true">
-<meta property="og:updated_time" content="2019-10-24T04:29:41.547Z">
+<meta property="og:updated_time" content="2019-10-25T01:39:50.096Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Kubernetes CSI(Container Storage Interface) 开发文档">
 <meta name="twitter:description" content="简介本文讲解了如何在Kubernetes上开发、部署和测试Container Storage Interface(CSI)驱动程序。 Container Storage Interface(CSI)是将任意块和文件存储系统暴露给容器编排系统(COs，如Kubernetes)上的容器化工作。使用CSI第三方存储提供商可以编写和部署在Kubernetes中暴露新存储系统的插件，而无需触及Kuberne">
@@ -279,11 +279,19 @@
                 
               
 
-              <time title="创建时间：2019-10-24 11:44:55 / 修改时间：04:29:41" itemprop="dateCreated datePublished" datetime="2019-10-24T11:44:55+00:00">2019-10-24</time>
+              <time title="创建时间：2019-10-24 11:44:55" itemprop="dateCreated datePublished" datetime="2019-10-24T11:44:55+00:00">2019-10-24</time>
             </span>
           
             
 
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-10-25 01:39:50" itemprop="dateModified" datetime="2019-10-25T01:39:50+00:00">2019-10-25</time>
+              </span>
             
           
             <span class="post-meta-item">
@@ -562,7 +570,7 @@
 <h4 id="查看CSDriver注册清单"><a href="#查看CSDriver注册清单" class="headerlink" title="查看CSDriver注册清单"></a>查看CSDriver注册清单</h4><p>使用CSIDriver对象，现在可以查询Kubernetes来获得在集群中运行的注册驱动程序列表，如下所示:</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>&gt; kubectl get csidrivers.storage.k8s.io</span><br><span class="line">NAME                  CREATED AT</span><br><span class="line">hostpath.csi.k8s.io   2019-09-13T09:58:43Z</span><br></pre></td></tr></table></figure>
 
-<p>或着取得更详细的信息，你的注册司机与:</p>
+<p>或着取得更详细的信息:</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>&gt; kubectl describe csidrivers.storage.k8s.io</span><br><span class="line">Name:         hostpath.csi.k8s.io</span><br><span class="line">Namespace:    </span><br><span class="line">Labels:       &lt;none&gt;</span><br><span class="line">Annotations:  kubectl.kubernetes.io/last-applied-configuration:</span><br><span class="line">                &#123;"apiVersion":"storage.k8s.io/v1beta1","kind":"CSIDriver","metadata":&#123;"annotations":&#123;&#125;,"name":"hostpath.csi.k8s.io"&#125;,"spec":&#123;"podInfoOnMou...</span><br><span class="line">API Version:  storage.k8s.io/v1beta1</span><br><span class="line">Kind:         CSIDriver</span><br><span class="line">Metadata:</span><br><span class="line">  Creation Timestamp:  2019-09-13T09:58:43Z</span><br><span class="line">  Resource Version:    341</span><br><span class="line">  Self Link:           /apis/storage.k8s.io/v1beta1/csidrivers/hostpath.csi.k8s.io</span><br><span class="line">  UID:                 1860f2a1-85f8-4357-a933-c45e54f0c8e0</span><br><span class="line">Spec:</span><br><span class="line">  Attach Required:    true</span><br><span class="line">  Pod Info On Mount:  true</span><br><span class="line">  Volume Lifecycle Modes:</span><br><span class="line">    Persistent</span><br><span class="line">    Ephemeral</span><br><span class="line">Events:  &lt;none&gt;</span><br></pre></td></tr></table></figure>
 
 <h4 id="Alpha-to-Beta版本的变化"><a href="#Alpha-to-Beta版本的变化" class="headerlink" title="Alpha to Beta版本的变化"></a>Alpha to Beta版本的变化</h4><p>在开发过程中，CSIDriver对象也被定义为自定义资源定义(CRD)。作为升级到beta的一部分，该对象已被移动到内置的Kubernetes API。</p>
