@@ -218,7 +218,7 @@ NAME                  CREATED AT
 hostpath.csi.k8s.io   2019-09-13T09:58:43Z
 ```
 
-或着取得更详细的信息，你的注册司机与:
+或着取得更详细的信息:
 
 ``` shell
 $> kubectl describe csidrivers.storage.k8s.io
