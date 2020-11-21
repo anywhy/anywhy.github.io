@@ -5,6 +5,7 @@ tags:
   - Kubernetes
   - CSI
   - storage
+abbrlink: 1079750075
 date: 2019-10-24 11:44:55
 ---
 
