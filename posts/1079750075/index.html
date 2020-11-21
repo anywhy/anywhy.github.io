@@ -66,7 +66,7 @@
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://anywhy.xyz/posts/1079750075/sidecar-container.png?raw=true">
 <meta property="og:image" content="http://anywhy.xyz/posts/1079750075/kubelet.png?raw=true">
-<meta property="og:updated_time" content="2019-10-25T01:39:50.096Z">
+<meta property="og:updated_time" content="2020-11-21T07:50:08.162Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Kubernetes CSI(Container Storage Interface) 开发文档">
 <meta name="twitter:description" content="简介本文讲解了如何在Kubernetes上开发、部署和测试Container Storage Interface(CSI)驱动程序。 Container Storage Interface(CSI)是将任意块和文件存储系统暴露给容器编排系统(COs，如Kubernetes)上的容器化工作。使用CSI第三方存储提供商可以编写和部署在Kubernetes中暴露新存储系统的插件，而无需触及Kuberne">
@@ -290,7 +290,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-10-25 01:39:50" itemprop="dateModified" datetime="2019-10-25T01:39:50+00:00">2019-10-25</time>
+                <time title="修改时间：2020-11-21 07:50:08" itemprop="dateModified" datetime="2020-11-21T07:50:08+00:00">2020-11-21</time>
               </span>
             
           
@@ -568,10 +568,10 @@
 </blockquote>
 <p><code>CSIDriver</code>实例应该存在于所有使用相应的CSI驱动程序提供的卷的POD整个生命周期中，所以<a href="https://github.com/kubernetes-csi/docs/blob/master/book/src/skip-attach.md" target="_blank" rel="noopener">Skip Attach</a>和<a href="https://github.com/kubernetes-csi/docs/blob/master/book/src/pod-info.md" target="_blank" rel="noopener">Pod Info on Mount</a>可以正确工作。</p>
 <h4 id="查看CSDriver注册清单"><a href="#查看CSDriver注册清单" class="headerlink" title="查看CSDriver注册清单"></a>查看CSDriver注册清单</h4><p>使用CSIDriver对象，现在可以查询Kubernetes来获得在集群中运行的注册驱动程序列表，如下所示:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>&gt; kubectl get csidrivers.storage.k8s.io</span><br><span class="line">NAME                  CREATED AT</span><br><span class="line">hostpath.csi.k8s.io   2019-09-13T09:58:43Z</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">&gt; kubectl get csidrivers.storage.k8s.io</span></span><br><span class="line">NAME                  CREATED AT</span><br><span class="line">hostpath.csi.k8s.io   2019-09-13T09:58:43Z</span><br></pre></td></tr></table></figure>
 
 <p>或着取得更详细的信息:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>&gt; kubectl describe csidrivers.storage.k8s.io</span><br><span class="line">Name:         hostpath.csi.k8s.io</span><br><span class="line">Namespace:    </span><br><span class="line">Labels:       &lt;none&gt;</span><br><span class="line">Annotations:  kubectl.kubernetes.io/last-applied-configuration:</span><br><span class="line">                &#123;"apiVersion":"storage.k8s.io/v1beta1","kind":"CSIDriver","metadata":&#123;"annotations":&#123;&#125;,"name":"hostpath.csi.k8s.io"&#125;,"spec":&#123;"podInfoOnMou...</span><br><span class="line">API Version:  storage.k8s.io/v1beta1</span><br><span class="line">Kind:         CSIDriver</span><br><span class="line">Metadata:</span><br><span class="line">  Creation Timestamp:  2019-09-13T09:58:43Z</span><br><span class="line">  Resource Version:    341</span><br><span class="line">  Self Link:           /apis/storage.k8s.io/v1beta1/csidrivers/hostpath.csi.k8s.io</span><br><span class="line">  UID:                 1860f2a1-85f8-4357-a933-c45e54f0c8e0</span><br><span class="line">Spec:</span><br><span class="line">  Attach Required:    true</span><br><span class="line">  Pod Info On Mount:  true</span><br><span class="line">  Volume Lifecycle Modes:</span><br><span class="line">    Persistent</span><br><span class="line">    Ephemeral</span><br><span class="line">Events:  &lt;none&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">&gt; kubectl describe csidrivers.storage.k8s.io</span></span><br><span class="line">Name:         hostpath.csi.k8s.io</span><br><span class="line">Namespace:    </span><br><span class="line">Labels:       &lt;none&gt;</span><br><span class="line">Annotations:  kubectl.kubernetes.io/last-applied-configuration:</span><br><span class="line">                &#123;"apiVersion":"storage.k8s.io/v1beta1","kind":"CSIDriver","metadata":&#123;"annotations":&#123;&#125;,"name":"hostpath.csi.k8s.io"&#125;,"spec":&#123;"podInfoOnMou...</span><br><span class="line">API Version:  storage.k8s.io/v1beta1</span><br><span class="line">Kind:         CSIDriver</span><br><span class="line">Metadata:</span><br><span class="line">  Creation Timestamp:  2019-09-13T09:58:43Z</span><br><span class="line">  Resource Version:    341</span><br><span class="line">  Self Link:           /apis/storage.k8s.io/v1beta1/csidrivers/hostpath.csi.k8s.io</span><br><span class="line">  UID:                 1860f2a1-85f8-4357-a933-c45e54f0c8e0</span><br><span class="line">Spec:</span><br><span class="line">  Attach Required:    true</span><br><span class="line">  Pod Info On Mount:  true</span><br><span class="line">  Volume Lifecycle Modes:</span><br><span class="line">    Persistent</span><br><span class="line">    Ephemeral</span><br><span class="line">Events:  &lt;none&gt;</span><br></pre></td></tr></table></figure>
 
 <h4 id="Alpha-to-Beta版本的变化"><a href="#Alpha-to-Beta版本的变化" class="headerlink" title="Alpha to Beta版本的变化"></a>Alpha to Beta版本的变化</h4><p>在开发过程中，CSIDriver对象也被定义为自定义资源定义(CRD)。作为升级到beta的一部分，该对象已被移动到内置的Kubernetes API。</p>
 <p>在从alpha迁移到beta的过程中，该对象的API组从<code>csi.storage.k8s.io/v1alpha1</code>更改为<code>storage.k8s.io/v1beta1</code>。</p>
@@ -581,7 +581,7 @@
 <li>通过以下Kubernetes特性标志确保启用特性门: <code>--feature-gates=CSIDriverRegistry=true</code></li>
 <li>要么通过Kubernetes存储CRD插件确保CSIDriver CRD是自动安装的，要么使用以下命令在Kubernetes集群上手动安装CSIDriver CRD:</li>
 </ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>&gt; kubectl create -f https://raw.githubusercontent.com/kubernetes/csi-api/master/pkg/crd/manifests/csidriver.yaml</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">&gt; kubectl create -f https://raw.githubusercontent.com/kubernetes/csi-api/master/pkg/crd/manifests/csidriver.yaml</span></span><br></pre></td></tr></table></figure>
 
 <p>Kubernetes v1.14+使用了相同的Kubernetes特性标志，但是由于该特性是beta版，所以默认启用了它。由于API类型(从beta版开始)内建在Kubernetes API中，因此不再需要安装CRD。</p>
 <h3 id="CSINode-Object"><a href="#CSINode-Object" class="headerlink" title="CSINode Object"></a>CSINode Object</h3><h4 id="状态-1"><a href="#状态-1" class="headerlink" title="状态"></a>状态</h4><ul>
@@ -627,7 +627,7 @@
 <li>确保使用<code>--features-gates=CSINodeInfo=true</code>启用功能。</li>
 <li>要么通过Kubernetes存储CRD插件确保<code>CSIDriver</code>CRD是自动安装的，要么使用以下命令在Kubernetes集群上手动安装<code>CSINodeInfo</code>CRD:</li>
 </ol>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span>&gt; kubectl create -f https://raw.githubusercontent.com/kubernetes/csi-api/master/pkg/crd/manifests/csinodeinfo.yaml</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">&gt; kubectl create -f https://raw.githubusercontent.com/kubernetes/csi-api/master/pkg/crd/manifests/csinodeinfo.yaml</span></span><br></pre></td></tr></table></figure>
 
 <p>Kubernetes v1.14+使用了相同的Kubernetes特性标志，但是由于该特性是beta版，所以默认启用了它。由于API类型(从beta版开始)内建在Kubernetes API中，因此不再需要安装CRD。</p>
 <h3 id="Kubernetes上安装CSI插件"><a href="#Kubernetes上安装CSI插件" class="headerlink" title="Kubernetes上安装CSI插件"></a>Kubernetes上安装CSI插件</h3><h4 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h4><p>CSI驱动程序通常作为两个组件部署在Kubernetes中:控制器组件和每个节点组件。</p>
@@ -646,9 +646,9 @@
 
 <h4 id="启用特权POD"><a href="#启用特权POD" class="headerlink" title="启用特权POD"></a>启用特权POD</h4><p>要使用CSI驱动程序，Kubernetes集群必须允许特权pod(即API服务器和kubelet必须将–allow-privileged标志设置为true)。这是某些环境(例如GCE、GKE、kubeadm)的默认设置。</p>
 <p>确保你的API服务器启动与特权标志:</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> ./kube-apiserver ...  --allow-privileged=true ...</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./kube-apiserver ...  --allow-privileged=<span class="literal">true</span> ...</span></span><br></pre></td></tr></table></figure>
 
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span> ./kubelet ...  --allow-privileged=true ...</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./kubelet ...  --allow-privileged=<span class="literal">true</span> ...</span></span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>注意:从Kubernetes 1.13.0开始，——对kubelet来说允许特权是正确的。在未来的kubernetes版本中，它将被弃用。</p>
@@ -691,6 +691,10 @@
             <span class="post-nav-divider"></span>
 
             <div class="post-nav-prev post-nav-item">
+              
+                <a href="/posts/2868751694/" rel="prev" title="Git命令-rebase">
+                  Git命令-rebase <i class="fa fa-chevron-right"></i>
+                </a>
               
             </div>
           </div>
@@ -761,7 +765,7 @@
         
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">4</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -774,7 +778,7 @@
             <a href="/categories/">
           
         
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">分类</span>
         </a>
       </div>
@@ -787,7 +791,7 @@
             <a href="/tags/">
           
         
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span>
         </a>
       </div>
@@ -860,7 +864,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
   <span class="with-love" id="animate">
     <i class="fa fa-heart"></i>
   </span>
@@ -871,14 +875,14 @@
     </span>
       <span class="post-meta-item-text">站点总字数：</span>
     
-    <span title="站点总字数">28k</span>
+    <span title="站点总字数">29k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
     
-    <span title="站点阅读时长">25 分钟</span>
+    <span title="站点阅读时长">27 分钟</span>
 </div>
 
         

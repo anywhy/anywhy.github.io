@@ -246,6 +246,149 @@
   
   
   <div class="post-block home">
+    <link itemprop="mainEntityOfPage" href="http://anywhy.xyz/posts/2868751694/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Anywhy  ( =•ω•= )">
+      <meta itemprop="description" content="对酒当歌，人生几何；何以解忧，唯有Coding。">
+      <meta itemprop="image" content="https://avatars2.githubusercontent.com/u/3348959?s=460&v=4">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="咩咩杨 ( =•ω•= )">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+            
+            <a href="/posts/2868751694/" class="post-title-link" itemprop="url">Git命令-rebase</a>
+          
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2020-11-21 07:50:08" itemprop="dateCreated datePublished" datetime="2020-11-21T07:50:08+00:00">2020-11-21</time>
+            </span>
+          
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Git/" itemprop="url" rel="index"><span itemprop="name">Git</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+          <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">本文字数：</span>
+              
+              <span>1.7k</span>
+            </span>
+          
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              
+              <span>2 分钟</span>
+            </span>
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="git-rebase-命令使用"><a href="#git-rebase-命令使用" class="headerlink" title="git rebase 命令使用"></a>git rebase 命令使用</h2><p><code>git rebase</code>命令在另一个分支基础之上重新应用，用于把一个分支的修改合并到当前分支，通常在对一个分支进行“变基”操作时使用。这意味着改变这个 branch 的初始 commit(我们知道 commits 本身组成了一颗树），它会在新的 base 上一个一个地运行这个分支上的所有 commits。</p>
+<h3 id="使用语法"><a href="#使用语法" class="headerlink" title="使用语法"></a>使用语法</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git rebase [-i | --interactive] [&lt;options&gt;] [--<span class="built_in">exec</span> &lt;cmd&gt;]</span><br><span class="line">    [--onto &lt;newbase&gt; | --keep-base] [&lt;upstream&gt; [&lt;branch&gt;]]</span><br><span class="line">git rebase [-i | --interactive] [&lt;options&gt;] [--<span class="built_in">exec</span> &lt;cmd&gt;] [--onto &lt;newbase&gt;]</span><br><span class="line">    --root [&lt;branch&gt;]</span><br><span class="line">git rebase (--<span class="built_in">continue</span> | --skip | --abort | --quit | --edit-todo | --show-current-patch)</span><br></pre></td></tr></table></figure>
+
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><p>假设存在以下历史，有两个分支一个是<code>master</code>,一个是<code>topic</code>, 当前分支是“topic”:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">      A---B---C topic</span><br><span class="line">     /</span><br><span class="line">D---E---F---G   master</span><br></pre></td></tr></table></figure>
+
+<p>如果我们对<code>topic</code>变基操作会变成一下结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">              A<span class="string">'--B'</span>--C<span class="string">' topic</span></span><br><span class="line"><span class="string">             /</span></span><br><span class="line"><span class="string">D---E---F---G master</span></span><br></pre></td></tr></table></figure>
+
+<p>这样能够维护一个清晰的语义化的暴露给大众的变更历史。</p>
+<h3 id="变基操作过程"><a href="#变基操作过程" class="headerlink" title="变基操作过程"></a>变基操作过程</h3><ul>
+<li>第一步，确认自己所在分支</li>
+<li>第二步：确定要 rebase 的 commit 的数量：<ul>
+<li>使用 git log 命令，查看 git 操作记录，确定要 rebase 的 commi 数量。</li>
+</ul>
+</li>
+<li>第三步：确定 rebase 的 commit 数量，执行命令<br>git rebase -i HEAD^^</li>
+<li>第四步：进入 rebase 的 vi 编辑模式</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">* p, pick = use commit</span><br><span class="line">* r, reword = use commit, but edit the commit message</span><br><span class="line">* e, edit = use commit, but stop <span class="keyword">for</span> amending</span><br><span class="line">* s, squash = use commit, but meld into previous commit</span><br><span class="line">* f, fixup = like “squash”, but discard this commit’s <span class="built_in">log</span> message</span><br><span class="line">* x, <span class="built_in">exec</span> = run <span class="built_in">command</span> (the rest of the line) using shell</span><br><span class="line">* d, drop = remove commit</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意，只需要，在第二个（此处是在两个 commit 合并成一个 commit 的情况下执行的！）的 commitId 前面，将 pick 修改为 s（编译器会自动将 s 变成 squash），然后，wq！退出保存即可。</p>
+</blockquote>
+<ul>
+<li>第五步：在第四步顺利的情况下，可以直接 git push -f 即可。</li>
+<li>但是如果第五步失败了！<ul>
+<li>执行以下的操作！</li>
+<li>继续执行 git rebase -i HEAD^^ –allow-empty<ul>
+<li>此处的允许空，是根据提示报错执行的，如果继续报错，但是其实可以看见，提示会变成，使用命令 git rebase —continue，继续执行。</li>
+<li>此时因为执行过 git rebase —continue ，则继续进入 vi 编辑模式，会看见，有两个对应 commitId 的 message。</li>
+</ul>
+</li>
+<li>可以开始修改自己的 message，然后保存退出。</li>
+<li>执行命令 git log，发现最新的 commit 已经变换</li>
+<li>执行命令 git status，查看当前 git 的命令</li>
+<li>最后执行 git push -f</li>
+<li>查看远程的 GitHub 的想对应的 pr 界面，发现 commit 已经变换。</li>
+</ul>
+</li>
+</ul>
+
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+          <div class="post-eof"></div>
+        
+      </footer>
+  </div>
+  
+  
+  
+  </article>
+
+    
+        <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block home">
     <link itemprop="mainEntityOfPage" href="http://anywhy.xyz/posts/1079750075/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -286,7 +429,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-10-25 01:39:50" itemprop="dateModified" datetime="2019-10-25T01:39:50+00:00">2019-10-25</time>
+                <time title="修改时间：2020-11-21 07:50:08" itemprop="dateModified" datetime="2020-11-21T07:50:08+00:00">2020-11-21</time>
               </span>
             
           
@@ -439,7 +582,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-10-25 01:39:50" itemprop="dateModified" datetime="2019-10-25T01:39:50+00:00">2019-10-25</time>
+                <time title="修改时间：2020-11-21 07:50:08" itemprop="dateModified" datetime="2020-11-21T07:50:08+00:00">2020-11-21</time>
               </span>
             
           
@@ -567,7 +710,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-10-25 01:39:50" itemprop="dateModified" datetime="2019-10-25T01:39:50+00:00">2019-10-25</time>
+                <time title="修改时间：2020-11-21 07:50:08" itemprop="dateModified" datetime="2020-11-21T07:50:08+00:00">2020-11-21</time>
               </span>
             
           
@@ -722,7 +865,7 @@
         
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">4</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -735,7 +878,7 @@
             <a href="/categories/">
           
         
-        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-count">3</span>
         <span class="site-state-item-name">分类</span>
         </a>
       </div>
@@ -748,7 +891,7 @@
             <a href="/tags/">
           
         
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">10</span>
         <span class="site-state-item-name">标签</span>
         </a>
       </div>
@@ -821,7 +964,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
   <span class="with-love" id="animate">
     <i class="fa fa-heart"></i>
   </span>
@@ -832,14 +975,14 @@
     </span>
       <span class="post-meta-item-text">站点总字数：</span>
     
-    <span title="站点总字数">28k</span>
+    <span title="站点总字数">29k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span class="post-meta-item-text">站点阅读时长 &asymp;</span>
     
-    <span title="站点阅读时长">25 分钟</span>
+    <span title="站点阅读时长">27 分钟</span>
 </div>
 
         

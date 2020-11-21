@@ -1,6 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Git命令-rebase</title>
+    <url>/posts/2868751694/</url>
+    <content><![CDATA[<h2 id="git-rebase-命令使用"><a href="#git-rebase-命令使用" class="headerlink" title="git rebase 命令使用"></a>git rebase 命令使用</h2><p><code>git rebase</code>命令在另一个分支基础之上重新应用，用于把一个分支的修改合并到当前分支，通常在对一个分支进行“变基”操作时使用。这意味着改变这个 branch 的初始 commit(我们知道 commits 本身组成了一颗树），它会在新的 base 上一个一个地运行这个分支上的所有 commits。</p>
+<h3 id="使用语法"><a href="#使用语法" class="headerlink" title="使用语法"></a>使用语法</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">git rebase [-i | --interactive] [&lt;options&gt;] [--<span class="built_in">exec</span> &lt;cmd&gt;]</span><br><span class="line">    [--onto &lt;newbase&gt; | --keep-base] [&lt;upstream&gt; [&lt;branch&gt;]]</span><br><span class="line">git rebase [-i | --interactive] [&lt;options&gt;] [--<span class="built_in">exec</span> &lt;cmd&gt;] [--onto &lt;newbase&gt;]</span><br><span class="line">    --root [&lt;branch&gt;]</span><br><span class="line">git rebase (--<span class="built_in">continue</span> | --skip | --abort | --quit | --edit-todo | --show-current-patch)</span><br></pre></td></tr></table></figure>
+
+<h3 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h3><p>假设存在以下历史，有两个分支一个是<code>master</code>,一个是<code>topic</code>, 当前分支是“topic”:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">      A---B---C topic</span><br><span class="line">     /</span><br><span class="line">D---E---F---G   master</span><br></pre></td></tr></table></figure>
+
+<p>如果我们对<code>topic</code>变基操作会变成一下结果：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">              A<span class="string">'--B'</span>--C<span class="string">' topic</span></span><br><span class="line"><span class="string">             /</span></span><br><span class="line"><span class="string">D---E---F---G master</span></span><br></pre></td></tr></table></figure>
+
+<p>这样能够维护一个清晰的语义化的暴露给大众的变更历史。</p>
+<h3 id="变基操作过程"><a href="#变基操作过程" class="headerlink" title="变基操作过程"></a>变基操作过程</h3><ul>
+<li>第一步，确认自己所在分支</li>
+<li>第二步：确定要 rebase 的 commit 的数量：<ul>
+<li>使用 git log 命令，查看 git 操作记录，确定要 rebase 的 commi 数量。</li>
+</ul>
+</li>
+<li>第三步：确定 rebase 的 commit 数量，执行命令<br>git rebase -i HEAD^^</li>
+<li>第四步：进入 rebase 的 vi 编辑模式</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">* p, pick = use commit</span><br><span class="line">* r, reword = use commit, but edit the commit message</span><br><span class="line">* e, edit = use commit, but stop <span class="keyword">for</span> amending</span><br><span class="line">* s, squash = use commit, but meld into previous commit</span><br><span class="line">* f, fixup = like “squash”, but discard this commit’s <span class="built_in">log</span> message</span><br><span class="line">* x, <span class="built_in">exec</span> = run <span class="built_in">command</span> (the rest of the line) using shell</span><br><span class="line">* d, drop = remove commit</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意，只需要，在第二个（此处是在两个 commit 合并成一个 commit 的情况下执行的！）的 commitId 前面，将 pick 修改为 s（编译器会自动将 s 变成 squash），然后，wq！退出保存即可。</p>
+</blockquote>
+<ul>
+<li>第五步：在第四步顺利的情况下，可以直接 git push -f 即可。</li>
+<li>但是如果第五步失败了！<ul>
+<li>执行以下的操作！</li>
+<li>继续执行 git rebase -i HEAD^^ –allow-empty<ul>
+<li>此处的允许空，是根据提示报错执行的，如果继续报错，但是其实可以看见，提示会变成，使用命令 git rebase —continue，继续执行。</li>
+<li>此时因为执行过 git rebase —continue ，则继续进入 vi 编辑模式，会看见，有两个对应 commitId 的 message。</li>
+</ul>
+</li>
+<li>可以开始修改自己的 message，然后保存退出。</li>
+<li>执行命令 git log，发现最新的 commit 已经变换</li>
+<li>执行命令 git status，查看当前 git 的命令</li>
+<li>最后执行 git push -f</li>
+<li>查看远程的 GitHub 的想对应的 pr 界面，发现 commit 已经变换。</li>
+</ul>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Git</category>
+      </categories>
+      <tags>
+        <tag>git</tag>
+        <tag>rebase</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Kubernetes CSI(Container Storage Interface) 开发文档</title>
     <url>/posts/1079750075/</url>
     <content><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>本文讲解了如何在Kubernetes上开发、部署和测试<a href="https://github.com/container-storage-interface/spec/blob/master/spec.md" target="_blank" rel="noopener">Container Storage Interface</a>(CSI)驱动程序。</p>
@@ -223,10 +276,10 @@
 </blockquote>
 <p><code>CSIDriver</code>实例应该存在于所有使用相应的CSI驱动程序提供的卷的POD整个生命周期中，所以<a href="https://github.com/kubernetes-csi/docs/blob/master/book/src/skip-attach.md" target="_blank" rel="noopener">Skip Attach</a>和<a href="https://github.com/kubernetes-csi/docs/blob/master/book/src/pod-info.md" target="_blank" rel="noopener">Pod Info on Mount</a>可以正确工作。</p>
 <h4 id="查看CSDriver注册清单"><a href="#查看CSDriver注册清单" class="headerlink" title="查看CSDriver注册清单"></a>查看CSDriver注册清单</h4><p>使用CSIDriver对象，现在可以查询Kubernetes来获得在集群中运行的注册驱动程序列表，如下所示:</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span>&gt; kubectl get csidrivers.storage.k8s.io</span><br><span class="line">NAME                  CREATED AT</span><br><span class="line">hostpath.csi.k8s.io   2019-09-13T09:58:43Z</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">&gt; kubectl get csidrivers.storage.k8s.io</span></span><br><span class="line">NAME                  CREATED AT</span><br><span class="line">hostpath.csi.k8s.io   2019-09-13T09:58:43Z</span><br></pre></td></tr></table></figure>
 
 <p>或着取得更详细的信息:</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span>&gt; kubectl describe csidrivers.storage.k8s.io</span><br><span class="line">Name:         hostpath.csi.k8s.io</span><br><span class="line">Namespace:    </span><br><span class="line">Labels:       &lt;none&gt;</span><br><span class="line">Annotations:  kubectl.kubernetes.io/last-applied-configuration:</span><br><span class="line">                &#123;"apiVersion":"storage.k8s.io/v1beta1","kind":"CSIDriver","metadata":&#123;"annotations":&#123;&#125;,"name":"hostpath.csi.k8s.io"&#125;,"spec":&#123;"podInfoOnMou...</span><br><span class="line">API Version:  storage.k8s.io/v1beta1</span><br><span class="line">Kind:         CSIDriver</span><br><span class="line">Metadata:</span><br><span class="line">  Creation Timestamp:  2019-09-13T09:58:43Z</span><br><span class="line">  Resource Version:    341</span><br><span class="line">  Self Link:           /apis/storage.k8s.io/v1beta1/csidrivers/hostpath.csi.k8s.io</span><br><span class="line">  UID:                 1860f2a1-85f8-4357-a933-c45e54f0c8e0</span><br><span class="line">Spec:</span><br><span class="line">  Attach Required:    true</span><br><span class="line">  Pod Info On Mount:  true</span><br><span class="line">  Volume Lifecycle Modes:</span><br><span class="line">    Persistent</span><br><span class="line">    Ephemeral</span><br><span class="line">Events:  &lt;none&gt;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">&gt; kubectl describe csidrivers.storage.k8s.io</span></span><br><span class="line">Name:         hostpath.csi.k8s.io</span><br><span class="line">Namespace:    </span><br><span class="line">Labels:       &lt;none&gt;</span><br><span class="line">Annotations:  kubectl.kubernetes.io/last-applied-configuration:</span><br><span class="line">                &#123;"apiVersion":"storage.k8s.io/v1beta1","kind":"CSIDriver","metadata":&#123;"annotations":&#123;&#125;,"name":"hostpath.csi.k8s.io"&#125;,"spec":&#123;"podInfoOnMou...</span><br><span class="line">API Version:  storage.k8s.io/v1beta1</span><br><span class="line">Kind:         CSIDriver</span><br><span class="line">Metadata:</span><br><span class="line">  Creation Timestamp:  2019-09-13T09:58:43Z</span><br><span class="line">  Resource Version:    341</span><br><span class="line">  Self Link:           /apis/storage.k8s.io/v1beta1/csidrivers/hostpath.csi.k8s.io</span><br><span class="line">  UID:                 1860f2a1-85f8-4357-a933-c45e54f0c8e0</span><br><span class="line">Spec:</span><br><span class="line">  Attach Required:    true</span><br><span class="line">  Pod Info On Mount:  true</span><br><span class="line">  Volume Lifecycle Modes:</span><br><span class="line">    Persistent</span><br><span class="line">    Ephemeral</span><br><span class="line">Events:  &lt;none&gt;</span><br></pre></td></tr></table></figure>
 
 <h4 id="Alpha-to-Beta版本的变化"><a href="#Alpha-to-Beta版本的变化" class="headerlink" title="Alpha to Beta版本的变化"></a>Alpha to Beta版本的变化</h4><p>在开发过程中，CSIDriver对象也被定义为自定义资源定义(CRD)。作为升级到beta的一部分，该对象已被移动到内置的Kubernetes API。</p>
 <p>在从alpha迁移到beta的过程中，该对象的API组从<code>csi.storage.k8s.io/v1alpha1</code>更改为<code>storage.k8s.io/v1beta1</code>。</p>
@@ -236,7 +289,7 @@
 <li>通过以下Kubernetes特性标志确保启用特性门: <code>--feature-gates=CSIDriverRegistry=true</code></li>
 <li>要么通过Kubernetes存储CRD插件确保CSIDriver CRD是自动安装的，要么使用以下命令在Kubernetes集群上手动安装CSIDriver CRD:</li>
 </ol>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span>&gt; kubectl create -f https://raw.githubusercontent.com/kubernetes/csi-api/master/pkg/crd/manifests/csidriver.yaml</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">&gt; kubectl create -f https://raw.githubusercontent.com/kubernetes/csi-api/master/pkg/crd/manifests/csidriver.yaml</span></span><br></pre></td></tr></table></figure>
 
 <p>Kubernetes v1.14+使用了相同的Kubernetes特性标志，但是由于该特性是beta版，所以默认启用了它。由于API类型(从beta版开始)内建在Kubernetes API中，因此不再需要安装CRD。</p>
 <h3 id="CSINode-Object"><a href="#CSINode-Object" class="headerlink" title="CSINode Object"></a>CSINode Object</h3><h4 id="状态-1"><a href="#状态-1" class="headerlink" title="状态"></a>状态</h4><ul>
@@ -282,7 +335,7 @@
 <li>确保使用<code>--features-gates=CSINodeInfo=true</code>启用功能。</li>
 <li>要么通过Kubernetes存储CRD插件确保<code>CSIDriver</code>CRD是自动安装的，要么使用以下命令在Kubernetes集群上手动安装<code>CSINodeInfo</code>CRD:</li>
 </ol>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span>&gt; kubectl create -f https://raw.githubusercontent.com/kubernetes/csi-api/master/pkg/crd/manifests/csinodeinfo.yaml</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">&gt; kubectl create -f https://raw.githubusercontent.com/kubernetes/csi-api/master/pkg/crd/manifests/csinodeinfo.yaml</span></span><br></pre></td></tr></table></figure>
 
 <p>Kubernetes v1.14+使用了相同的Kubernetes特性标志，但是由于该特性是beta版，所以默认启用了它。由于API类型(从beta版开始)内建在Kubernetes API中，因此不再需要安装CRD。</p>
 <h3 id="Kubernetes上安装CSI插件"><a href="#Kubernetes上安装CSI插件" class="headerlink" title="Kubernetes上安装CSI插件"></a>Kubernetes上安装CSI插件</h3><h4 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h4><p>CSI驱动程序通常作为两个组件部署在Kubernetes中:控制器组件和每个节点组件。</p>
@@ -301,9 +354,9 @@
 
 <h4 id="启用特权POD"><a href="#启用特权POD" class="headerlink" title="启用特权POD"></a>启用特权POD</h4><p>要使用CSI驱动程序，Kubernetes集群必须允许特权pod(即API服务器和kubelet必须将–allow-privileged标志设置为true)。这是某些环境(例如GCE、GKE、kubeadm)的默认设置。</p>
 <p>确保你的API服务器启动与特权标志:</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span> ./kube-apiserver ...  --allow-privileged=true ...</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./kube-apiserver ...  --allow-privileged=<span class="literal">true</span> ...</span></span><br></pre></td></tr></table></figure>
 
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span> ./kubelet ...  --allow-privileged=true ...</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> ./kubelet ...  --allow-privileged=<span class="literal">true</span> ...</span></span><br></pre></td></tr></table></figure>
 
 <blockquote>
 <p>注意:从Kubernetes 1.13.0开始，——对kubelet来说允许特权是正确的。在未来的kubernetes版本中，它将被弃用。</p>
